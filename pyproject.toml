@@ -1,0 +1,42 @@
+[tool.poetry]
+name = "itmo-sem-back"
+version = "0.1.0"
+description = ""
+authors = ["Evgeny Gurin", "Pavel Efarinov", "Ksenia Kamyshanskaya"]
+readme = "README.md"
+packages = [{include = "app"}]
+
+[tool.poetry.dependencies]
+python = "~3.8.1"
+fastapi = "0.92.0"
+SQLAlchemy = {extras = ["mypy"], version = "2.0.12"}
+alembic = "1.9.4"
+pydantic = "1.10.5"
+python-multipart = "0.0.6"
+python-dotenv = "1.0.0"
+toml = "0.10.2"
+psycopg2-binary = "2.9.5"
+uvicorn = "0.20.0"
+python-jose = "3.3.0"
+passlib = {extras = ["bcrypt"], version = "1.7.4"}
+asyncpg = "0.27.0"
+
+[tool.poetry.group.dev.dependencies]
+flake8 = "6.0.0"
+isort = "5.12.0"
+pytest = "7.2.1"
+pre-commit = "3.1.1"
+black = "23.1.0"
+mypy = "1.0.1"
+
+[tool.mypy]
+plugins = "pydantic.mypy,sqlalchemy.ext.mypy.plugin"
+exclude = "app/migrations"
+disallow_untyped_defs = "True"
+ignore_missing_imports = "True"
+warn_redundant_casts = "True"
+warn_unused_ignores = "True"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

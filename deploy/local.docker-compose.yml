@@ -1,0 +1,60 @@
+version: "3.9"
+services:
+  db:
+    restart: unless-stopped
+    container_name: sem-db
+    image: postgres:13
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=1000"
+      - "-c"
+      - "shared_buffers=1GB"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=sem_data
+    volumes:
+      - ../.database:/var/lib/postgresql/data
+    ports:
+      - "5438:5432"
+    healthcheck:
+      test: pg_isready -U ${POSTGRES_USER:-postgres} -d sem_data
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+  backend:
+    restart: unless-stopped
+    container_name: sem-backend
+    build:
+      context: ..
+      args:
+        - ENVIRONMENT=PRODUCTION
+        - DATABASE_URI="postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5438/sem_data"
+        - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS:-*}
+        - WORKERS=1
+        - RELOAD=1
+    volumes:
+      - ../app:/backend/app
+    ports:
+      - "5010:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    links:
+      - db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
