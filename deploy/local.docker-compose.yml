@@ -34,11 +34,12 @@ services:
     build:
       context: ..
       args:
-        - ENVIRONMENT=PRODUCTION
-        - DATABASE_URI="postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5438/sem_data"
-        - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS:-*}
         - WORKERS=1
         - RELOAD=1
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-DEV}
+      - DATABASE_URI=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/sem_data
+      - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS:-*}
     volumes:
       - ../app:/backend/app
     ports:
