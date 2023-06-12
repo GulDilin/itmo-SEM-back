@@ -1,29 +1,35 @@
 from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 
-from app import schemas
+from app import schemas, services
 from app.api import deps, util
 from app.db import entities
-from app.services import OrderService
 
 router = APIRouter()
 
 
 @router.post('/', response_model=schemas.Order)
-async def create_task(
-        task: schemas.OrderCreate,
-        task_service: OrderService = Depends(deps.get_tasks_service),
+async def create_order(
+        order: schemas.OrderCreate,
+        order_service: services.OrderService = Depends(deps.get_order_service),
+        order_type_service: services.OrderTypeService = Depends(deps.get_order_type_service),
 ) -> schemas.Order:
-    return schemas.Order(**jsonable_encoder(await task_service.create(task)))
+    order_type = await deps.get_path_order_type(
+        order_type_id=order.order_type_id,
+        order_type_service=order_type_service
+    )
+    return schemas.Order(**jsonable_encoder(
+        await order_service.create(order, order_type=order_type)
+    ))
 
 
 @router.get('/', response_model=schemas.PaginatedResponse)
-async def get_tasks(
+async def get_orders(
     paginator: schemas.PaginationData = Depends(),
-    task_service: OrderService = Depends(deps.get_tasks_service),
+    order_service: services.OrderService = Depends(deps.get_order_service),
 ) -> schemas.PaginatedResponse:
     return await util.get_paginated_response(
-        await task_service.read_many_paginated(
+        await order_service.read_many_paginated(
             wrapper_class=schemas.Order,
             offset=paginator.offset,
             limit=paginator.limit,
@@ -32,26 +38,29 @@ async def get_tasks(
     )
 
 
-@router.get('/{task_id}', response_model=schemas.Order)
-async def get_task(
-    task: entities.Order = Depends(deps.get_path_task),
+@router.get('/{order_id}', response_model=schemas.Order)
+async def get_order(
+    order: entities.Order = Depends(deps.get_path_order),
 ) -> schemas.Order:
-    return schemas.Order(**jsonable_encoder(task))
+    return schemas.Order(**jsonable_encoder(order))
 
 
-@router.put('/{task_id}', response_model=schemas.Order)
-async def update_task(
-    task_update_data: schemas.OrderUpdate,
-    task: entities.Order = Depends(deps.get_path_task),
-    task_service: OrderService = Depends(deps.get_tasks_service),
+@router.put('/{order_id}', response_model=schemas.Order)
+async def update_order(
+    order_update_data: schemas.OrderUpdate,
+    order: entities.Order = Depends(deps.get_path_order),
+    order_service: services.OrderService = Depends(deps.get_order_service),
 ) -> schemas.Order:
-    updated = await task_service.update(id=str(task.id), **jsonable_encoder(task_update_data))
+    updated = await order_service.update(
+        id=str(order.id),
+        **jsonable_encoder(order_update_data, exclude_none=True)
+    )
     return schemas.Order(**jsonable_encoder(updated))
 
 
-@router.delete('/{task_id}')
-async def delete_task(
-    task: entities.Order = Depends(deps.get_path_task),
-    task_service: OrderService = Depends(deps.get_tasks_service),
+@router.delete('/{order_id}')
+async def delete_order(
+    order: entities.Order = Depends(deps.get_path_order),
+    order_service: services.OrderService = Depends(deps.get_order_service),
 ) -> None:
-    await task_service.delete(id=task.id)
+    await order_service.delete(id=order.id)

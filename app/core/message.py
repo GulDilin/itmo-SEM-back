@@ -22,4 +22,8 @@ ERROR_ACTION_FORBIDDEN = "You don't have enough rights to do this"
 """
 MODELS
 """
+MODEL_ORDER_TYPE = 'Order Type'
+MODEL_ORDER_TYPE_PARAM = 'Order Type Param'
 MODEL_ORDER = 'Order'
+MODEL_ORDER_PARAM_VALUE = 'Order Param Value'
+MODEL_ORDER_CONFIRMATION = 'Order Confirmation'

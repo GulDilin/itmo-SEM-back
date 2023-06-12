@@ -16,9 +16,14 @@ class OrderService(BaseService):
             sorting_fields=entities.OrderSortingFields,
         )
 
-    async def create(self, item: schemas.OrderCreate) -> entities.Order:
+    async def create(
+        self,
+        item: schemas.OrderCreate,
+        order_type: entities.OrderType,
+    ) -> entities.Order:
         return await self._create(item=entities.Order(
             status=schemas.OrderStatus.NEW,
             user_customer=item.user_customer,
             user_implementer=item.user_implementer,
+            order_type_id=order_type.id,
         ))
