@@ -22,4 +22,4 @@ ERROR_ACTION_FORBIDDEN = "You don't have enough rights to do this"
 """
 MODELS
 """
-MODEL_TASK = 'Task'
+MODEL_ORDER = 'Order'

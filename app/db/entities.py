@@ -1,6 +1,7 @@
 import uuid
 
 import sqlalchemy as sa
+from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.sql import func
 
 from .base_class import Base
@@ -34,8 +35,51 @@ class TimeStampedWithId(TimeStamped):
 DefaultSortingFields = {'id', 'updated_at', 'created_at'}
 
 
-class Task(TimeStampedWithId):
-    content = sa.Column(sa.String(100))
+class OrderType(TimeStampedWithId):
+    name = sa.Column(sa.String(100))
 
 
-TaskSortingFields = {*DefaultSortingFields, 'content'}
+OrderTypeSortingFields = {*DefaultSortingFields, 'name'}
+
+
+class OrderTypeParam(TimeStampedWithId):
+    name = sa.Column(sa.String(100))
+    value_type = sa.Column(sa.String(100))
+    required = sa.Column(sa.Boolean)
+    order_type: Mapped[OrderType] = relationship('OrderType', cascade="all,delete")
+    order_type_id = sa.Column(sa.String(50), sa.ForeignKey('order_type.id'))
+
+
+OrderTypeParamSortingFields = {*DefaultSortingFields, 'name', 'value_type', 'required', 'order_type_id'}
+
+
+class Order(TimeStampedWithId):
+    status = sa.Column(sa.String(100))
+    user_customer = sa.Column(sa.String(100))
+    user_implementer = sa.Column(sa.String(100))
+    order_type: Mapped[OrderType] = relationship('OrderType', cascade="all,delete")
+    order_type_id = sa.Column(sa.String(50), sa.ForeignKey('order_type.id'))
+
+
+OrderSortingFields = {*DefaultSortingFields, 'status', 'order_type_id'}
+
+
+class OrderParamValue(TimeStampedWithId):
+    value = sa.Column(sa.String(100))
+    order_type_param: Mapped[OrderType] = relationship('OrderTypeParam', cascade="all,delete")
+    order_type_param_id = sa.Column(sa.String(50), sa.ForeignKey('order_type_param.id'))
+    order: Mapped[Order] = relationship('Order', cascade="all,delete")
+    order_id = sa.Column(sa.String(50), sa.ForeignKey('order.id'))
+
+
+OrderParamValueSortingFields = {*DefaultSortingFields, 'value', 'order_type_param_id', 'order_id'}
+
+
+class OrderConfirmation(TimeStampedWithId):
+    user = sa.Column(sa.String(100))
+    signed = sa.Column(sa.Boolean)
+    order: Mapped[Order] = relationship('Order', cascade="all,delete")
+    order_id = sa.Column(sa.String(50), sa.ForeignKey('order.id'))
+
+
+OrderConfirmationSortingFields = {*DefaultSortingFields, 'signed', 'order_id'}

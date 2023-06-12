@@ -54,3 +54,31 @@ POSTGRES_PASSWORD=postgres  # Required | Postgres password. It used only with do
 POSTGRES_DB=sem_data             # Required | Postgres db name. It used only with docker to set up postgres and generate DATABASE_URI
 DATABASE_URI=postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/sem_data  # Required
 ```
+
+### Requirements export
+
+```shell
+poetry export -f requirements.txt -o requirements.txt --without-hashes
+```
+
+
+### Upgrade to the latest migration revision
+
+```shell
+poetry run alembic upgrade head
+```
+
+
+### Create migrations revision
+WARNING: It use `DATABASE_URI` var from env, so setup in to `.env` when you start migration
+
+
+```
+# for default config
+DATABASE_URI=postgresql+asyncpg://postgres:postgres@127.0.0.1:5438/sem_data
+```
+
+
+```shell
+poetry run alembic revision --autogenerate -m "<message>"
+```
