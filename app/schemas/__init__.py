@@ -4,6 +4,7 @@ from .order_param_value import (OrderParamValue, OrderParamValueCreate,
 from .order_type import OrderType, OrderTypeCreate, OrderTypeUpdate
 from .order_type_param import (OrderParamValueType, OrderTypeParam,
                                OrderTypeParamCreate, OrderTypeParamUpdate)
+from .order_link import (OrderLink, OrderLinkCreate)
 from .util import (PaginatedResponse, PaginationData, SortingList,
                    SortingListItem, SortingType, StrEnum, Timestamped,
                    TimestampedWithId, ValuesEnum, Version)
