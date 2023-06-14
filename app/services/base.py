@@ -7,9 +7,10 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy import and_, delete, or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import Query, joinedload
+from sqlalchemy.orm import Query, joinedload, defaultload
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import ColumnElement
+from app.log import logger
 
 from app import schemas
 from app.core import error
@@ -79,23 +80,55 @@ class BaseService:
         """
         return query.order_by(*order_by) if order_by else query
 
+    def _set_joinedload_nested(
+        self,
+        q: Query,
+        load_props: List[str]
+    ) -> Query:
+        attr = getattr(self.entity, load_props[0])  # type is sqlalchemy.orm.attributes.InstrumentedAttribute
+        load = defaultload(attr)
+        parent_entity = attr.property.entity.entity
+        for field in load_props[1:]:
+            attr = getattr(parent_entity, field)
+            load = load.defaultload(attr)
+            parent_entity = attr.property.entity.entity
+        return q.options(load)
+
     def _set_joinedload(
         self,
         q: Query,
         load_props: Optional[Iterable[str]] = None
     ) -> Query:
         """
-        Define joined load modifiers (to load some foreign fields on select)
+        Define fields that will be loaded with joinedload (for inner entity fields)
 
-        :param q: Database query
-        :param load_props: Iterable with attrs names
+        :param query: Database query
+        :param prefetch_fields: Iterable with field names that will be prefetched
         :return: Modified database query
         """
-        return reduce(
-            lambda acc, attr: acc.options(joinedload(getattr(self.entity, attr))),
-            load_props or [],
-            q
-        )
+        if load_props is not None:
+            for field in load_props:
+                load_props = [it for it in field.split('.') if it]
+                q = self._set_joinedload_nested(q, load_props)
+        return q
+
+    # def _set_joinedload(
+    #     self,
+    #     q: Query,
+    #     load_props: Optional[Iterable[str]] = None
+    # ) -> Query:
+    #     """
+    #     Define joined load modifiers (to load some foreign fields on select)
+
+    #     :param q: Database query
+    #     :param load_props: Iterable with attrs names
+    #     :return: Modified database query
+    #     """
+    #     return reduce(
+    #         lambda acc, attr: acc.options(joinedload(getattr(self.entity, attr))),
+    #         load_props or [],
+    #         q
+    #     )
 
     @staticmethod
     def _set_modifiers(
@@ -156,7 +189,7 @@ class BaseService:
     ) -> Sequence[Any]:
         return (await self.db_session.execute(
             self._setup_query(offset=offset, limit=limit, **kwargs)
-        )).scalars().all()
+        )).scalars().unique().all()
 
     async def read_many_paginated(
             self,

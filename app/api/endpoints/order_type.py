@@ -24,6 +24,8 @@ async def get_orders(
     return await util.get_paginated_response(
         await order_type_service.read_many_paginated(
             wrapper_class=schemas.OrderType,
+            load_props=['params'],
+            # modifiers=[modifier],
             offset=paginator.offset,
             limit=paginator.limit,
         ),

@@ -3,7 +3,7 @@ import uuid
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.sql import func
-
+from typing import List
 from .base_class import Base
 
 
@@ -37,6 +37,12 @@ DefaultSortingFields = {'id', 'updated_at', 'created_at'}
 
 class OrderType(TimeStampedWithId):
     name = sa.Column(sa.String(100))
+    params: Mapped[List['OrderTypeParam']] = relationship(
+        "OrderTypeParam",
+        backref="order_type",
+        uselist=True,
+        lazy='joined',
+    )
 
 
 OrderTypeSortingFields = {*DefaultSortingFields, 'name'}
@@ -47,7 +53,7 @@ class OrderTypeParam(TimeStampedWithId):
     name = sa.Column(sa.String(100))
     value_type = sa.Column(sa.String(100))
     required = sa.Column(sa.Boolean)
-    order_type: Mapped[OrderType] = relationship('OrderType', cascade="all,delete")
+    # order_type: Mapped[OrderType] = relationship('OrderType', cascade="all,delete", back_populates="params")
     order_type_id = sa.Column(sa.String(50), sa.ForeignKey('order_type.id'), nullable=False)
 
 
@@ -62,6 +68,11 @@ class Order(TimeStampedWithId):
     order_type_id = sa.Column(sa.String(50), sa.ForeignKey('order_type.id'), nullable=False)
     parent_order: Mapped['Order'] = relationship('Order', cascade="all,delete")
     parent_order_id = sa.Column(sa.String(50), sa.ForeignKey('order.id'), nullable=True)
+    params: Mapped[List['OrderParamValue']] = relationship(
+        "OrderParamValue",
+        back_populates="order",
+        cascade="delete"
+    )
 
 
 OrderSortingFields = {*DefaultSortingFields, 'status', 'order_type_id'}
@@ -72,7 +83,7 @@ class OrderParamValue(TimeStampedWithId):
     value = sa.Column(sa.String(100))
     order_type_param: Mapped[OrderType] = relationship('OrderTypeParam', cascade="all,delete")
     order_type_param_id = sa.Column(sa.String(50), sa.ForeignKey('order_type_param.id'), nullable=False)
-    order: Mapped[Order] = relationship('Order', cascade="all,delete")
+    order: Mapped[Order] = relationship('Order', cascade="all,delete", back_populates="params")
     order_id = sa.Column(sa.String(50), sa.ForeignKey('order.id'), nullable=False)
 
 
