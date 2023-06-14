@@ -61,7 +61,7 @@ class Order(TimeStampedWithId):
     order_type: Mapped[OrderType] = relationship('OrderType', cascade="all,delete")
     order_type_id = sa.Column(sa.String(50), sa.ForeignKey('order_type.id'), nullable=False)
     parent_order: Mapped['Order'] = relationship('Order', cascade="all,delete")
-    parent_order_id = sa.Column(sa.String(50), sa.ForeignKey('order.id'), nullable=False)
+    parent_order_id = sa.Column(sa.String(50), sa.ForeignKey('order.id'), nullable=True)
 
 
 OrderSortingFields = {*DefaultSortingFields, 'status', 'order_type_id'}
