@@ -60,6 +60,8 @@ class Order(TimeStampedWithId):
     user_implementer = sa.Column(sa.String(100))
     order_type: Mapped[OrderType] = relationship('OrderType', cascade="all,delete")
     order_type_id = sa.Column(sa.String(50), sa.ForeignKey('order_type.id'), nullable=False)
+    parent_order: Mapped['Order'] = relationship('Order', cascade="all,delete")
+    parent_order_id = sa.Column(sa.String(50), sa.ForeignKey('order.id'), nullable=False)
 
 
 OrderSortingFields = {*DefaultSortingFields, 'status', 'order_type_id'}
@@ -85,22 +87,3 @@ class OrderConfirmation(TimeStampedWithId):
 
 
 OrderConfirmationSortingFields = {*DefaultSortingFields, 'signed', 'order_id'}
-
-
-class OrderLinkType(TimeStampedWithId):
-    name = sa.Column(sa.String(100))
-
-
-OrderLinkTypeSortingFields = {*DefaultSortingFields, 'name'}
-
-
-class OrderLink(TimeStampedWithId):
-    order_left: Mapped[Order] = relationship('LeftOrder', cascade="all,delete")
-    order_left_id = sa.Column(sa.String(50), sa.ForeignKey('order.id'), nullable=False)
-    order_right: Mapped[Order] = relationship('RightOrder', cascade="all,delete")
-    order_right_id = sa.Column(sa.String(50), sa.ForeignKey('order.id'), nullable=False)
-    link_type: Mapped[OrderLinkType] = relationship('OrderLinkType', cascade='all,delete')
-    link_type_id = sa.Column(sa.String(50), sa.ForeignKey('order_link_type.id'), nullable=False)
-
-
-OrderLinkSortingFields = {*DefaultSortingFields, 'order_left_id', 'order_right_id', 'link_type_id'}
