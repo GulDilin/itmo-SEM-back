@@ -7,3 +7,5 @@ from .order_type_param import (OrderParamValueType, OrderTypeParam,
 from .util import (PaginatedResponse, PaginationData, SortingList,
                    SortingListItem, SortingType, StrEnum, Timestamped,
                    TimestampedWithId, ValuesEnum, Version)
+from .User import (User)
+from .KeycloakEndpoint import USER_INFO

@@ -7,12 +7,14 @@ from pydantic import SecretStr
 
 from fastapi_keycloak import FastAPIKeycloak, OIDCUser, UsernamePassword, HTTPMethod, KeycloakUser, KeycloakGroup
 
+from app.settings import settings
+
 app = FastAPI()
 idp = FastAPIKeycloak(
-    server_url="http://keycloak:8080/auth",
+    server_url=f"{settings.KEYCLOAK_URL}/auth",
     client_id="test-client",
-    client_secret="DJZf11A3qatXjQ57EEpByhzs18w3Y1Fb",
-    admin_client_secret="NgJ8rcmzAlz1ljX0j5xkQ7hxDcIQeL6s",
+    client_secret="GzgACcJzhzQ4j8kWhmhazt7WSdxDVUyE",
+    admin_client_secret="BIcczGsZ6I8W5zf0rZg5qSexlloQLPKB",
     realm="Test",
     callback_uri="http://backend:5000/admin/callback"
 )
