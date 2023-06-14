@@ -87,14 +87,3 @@ async def get_path_order_param_value(
         order_id=str(order.id),
         order_type_param_id=str(order_type_param.id),
     )
-
-
-async def get_order_link_service(
-        session: AsyncSession = Depends(get_session)
-) -> AsyncGenerator[services.OrderLinkService, None]: yield services.OrderLinkService(session)
-
-
-async def get_path_order_link(
-        order_link_service: services.OrderLinkService = Depends(get_order_link_service),
-        order_link_id: UUID = Path(None, title='Order Link ID'),
-) -> entities.OrderLink: return await order_link_service.read_one(id=str(order_link_id))
