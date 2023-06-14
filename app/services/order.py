@@ -25,5 +25,6 @@ class OrderService(BaseService):
             status=schemas.OrderStatus.NEW,
             user_customer=item.user_customer,
             user_implementer=item.user_implementer,
+            parent_order_id=item.parent_order_id,
             order_type_id=order_type.id,
         ))
