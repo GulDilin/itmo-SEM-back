@@ -1,15 +1,12 @@
 from typing import List, Optional
 
-import uvicorn
-from fastapi import FastAPI, Depends, Query, Body, APIRouter
-
+from fastapi import APIRouter, Body, Depends, Query
+from fastapi_keycloak import (FastAPIKeycloak, HTTPMethod, KeycloakUser,
+                              OIDCUser, UsernamePassword)
 from pydantic import SecretStr
-
-from fastapi_keycloak import FastAPIKeycloak, OIDCUser, UsernamePassword, HTTPMethod, KeycloakUser, KeycloakGroup
 
 from app.settings import settings
 
-app = FastAPI()
 idp = FastAPIKeycloak(
     server_url=f"{settings.KEYCLOAK_URL}/auth",
     client_id="test-client",
@@ -18,14 +15,15 @@ idp = FastAPIKeycloak(
     realm="Test",
     callback_uri="http://backend:5000/admin/callback"
 )
-idp.add_swagger_config(app)
 
 router = APIRouter()
+
 
 # Admin
 
 @router.post("/proxy", tags=["admin-cli"])
-def proxy_admin_request(relative_path: str, method: HTTPMethod, additional_headers: dict = Body(None), payload: dict = Body(None)):
+def proxy_admin_request(relative_path: str, method: HTTPMethod, additional_headers: dict = Body(None),
+                        payload: dict = Body(None)):
     return idp.proxy(
         additional_headers=additional_headers,
         relative_path=relative_path,
@@ -58,7 +56,8 @@ def get_user_by_query(query: str = None):
 
 @router.post("/users", tags=["user-management"])
 def create_user(first_name: str, last_name: str, email: str, password: SecretStr, id: str = None):
-    return idp.create_user(first_name=first_name, last_name=last_name, username=email, email=email, password=password.get_secret_value(), id=id)
+    return idp.create_user(first_name=first_name, last_name=last_name, username=email, email=email,
+                           password=password.get_secret_value(), id=id)
 
 
 @router.get("/user/{user_id}", tags=["user-management"])
