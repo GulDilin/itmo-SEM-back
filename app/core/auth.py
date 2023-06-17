@@ -3,7 +3,6 @@ import json
 
 import httpx
 from fastapi.security import OAuth2PasswordBearer
-from app.log import logger
 
 from app import schemas
 from app.settings import settings
@@ -27,8 +26,6 @@ async def verify_token(token: str) -> dict:
         headers = {
             "Authorization": f"Bearer {token}",
         }
-        logger.info(token)
-        logger.info(userinfo_url)
         async with httpx.AsyncClient() as client:
             response = await client.get(userinfo_url, headers=headers)
             return response.json()

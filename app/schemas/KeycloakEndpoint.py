@@ -1,1 +1,0 @@
-USER_INFO = '{url}/auth/admin/realms/{realm}/protocol/openid-connect/userinfo'
