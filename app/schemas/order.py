@@ -1,8 +1,9 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
 from .util import StrEnum, TimestampedWithId
+from .order_param_value import OrderParamValue
 
 
 class OrderStatus(StrEnum):
@@ -29,3 +30,4 @@ class Order(TimestampedWithId):
     user_implementer: str
     order_type_id: Optional[str]
     parent_order_id: Optional[str] = None
+    params: List[OrderParamValue]

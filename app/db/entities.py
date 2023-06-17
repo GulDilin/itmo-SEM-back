@@ -39,7 +39,7 @@ class OrderType(TimeStampedWithId):
     name = sa.Column(sa.String(100))
     params: Mapped[List['OrderTypeParam']] = relationship(
         "OrderTypeParam",
-        backref="order_type",
+        back_populates="order_type",
         uselist=True,
         lazy='joined',
     )
@@ -53,7 +53,7 @@ class OrderTypeParam(TimeStampedWithId):
     name = sa.Column(sa.String(100))
     value_type = sa.Column(sa.String(100))
     required = sa.Column(sa.Boolean)
-    # order_type: Mapped[OrderType] = relationship('OrderType', cascade="all,delete", back_populates="params")
+    order_type: Mapped[OrderType] = relationship('OrderType', cascade="all,delete", back_populates="params")
     order_type_id = sa.Column(sa.String(50), sa.ForeignKey('order_type.id'), nullable=False)
 
 
@@ -71,7 +71,8 @@ class Order(TimeStampedWithId):
     params: Mapped[List['OrderParamValue']] = relationship(
         "OrderParamValue",
         back_populates="order",
-        cascade="delete"
+        uselist=True,
+        lazy='joined',
     )
 
 

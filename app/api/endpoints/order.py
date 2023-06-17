@@ -33,6 +33,7 @@ async def get_orders(
             wrapper_class=schemas.Order,
             offset=paginator.offset,
             limit=paginator.limit,
+            load_props=['params.order_type_param'],
         ),
         paginator
     )
