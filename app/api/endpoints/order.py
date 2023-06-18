@@ -13,7 +13,9 @@ async def create_order(
         order: schemas.OrderCreate,
         order_type: entities.OrderType = Depends(deps.get_path_order_type),
         order_service: services.OrderService = Depends(deps.get_order_service),
+        user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
 ) -> schemas.Order:
+    # TODO проверить роль пользователя и тип создаваемого order
     return schemas.Order(**jsonable_encoder(
         await order_service.create(order, order_type=order_type)
     ))
@@ -21,10 +23,10 @@ async def create_order(
 
 @router.get('/{order_type_id}/order/', response_model=schemas.PaginatedResponse)
 async def get_orders(
-    paginator: schemas.PaginationData = Depends(),
-    order_type: entities.OrderType = Depends(deps.get_path_order_type),
-    order_service: services.OrderService = Depends(deps.get_order_service),
-    user_data: schemas.User = Depends(deps.get_user_data)
+        paginator: schemas.PaginationData = Depends(),
+        order_type: entities.OrderType = Depends(deps.get_path_order_type),
+        order_service: services.OrderService = Depends(deps.get_order_service),
+        user_data: schemas.User = Depends(deps.get_user_data)
 ) -> schemas.PaginatedResponse:
     print(user_data)
     return await util.get_paginated_response(
@@ -41,16 +43,18 @@ async def get_orders(
 
 @router.get('/{order_type_id}/order/{order_id}', response_model=schemas.Order)
 async def get_order(
-    order: entities.Order = Depends(deps.get_path_order),
+        order: entities.Order = Depends(deps.get_path_order),
+        user_data: schemas.User = Depends(deps.get_user_data)
 ) -> schemas.Order:
     return schemas.Order(**jsonable_encoder(order))
 
 
 @router.put('/{order_type_id}/order/{order_id}', response_model=schemas.Order)
 async def update_order(
-    order_update_data: schemas.OrderUpdate,
-    order: entities.Order = Depends(deps.get_path_order),
-    order_service: services.OrderService = Depends(deps.get_order_service),
+        order_update_data: schemas.OrderUpdate,
+        order: entities.Order = Depends(deps.get_path_order),
+        order_service: services.OrderService = Depends(deps.get_order_service),
+        user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
 ) -> schemas.Order:
     updated = await order_service.update(
         id=str(order.id),
@@ -61,7 +65,8 @@ async def update_order(
 
 @router.delete('/{order_type_id}/order/{order_id}')
 async def delete_order(
-    order: entities.Order = Depends(deps.get_path_order),
-    order_service: services.OrderService = Depends(deps.get_order_service),
+        order: entities.Order = Depends(deps.get_path_order),
+        order_service: services.OrderService = Depends(deps.get_order_service),
+        user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
 ) -> None:
     await order_service.delete(id=order.id)
