@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from pydantic import BaseModel
 
@@ -8,9 +8,6 @@ from .util import StrEnum
 
 
 class KeycloakEndpoint(StrEnum):
-    USER_INFO = '{url}/admin/realms/{realm}/protocol/openid-connect/userinfo'
-    INTROSPECT = '{url}/realms/{realm}/protocol/openid-connect/token/introspect'
-    TOKEN = '{url}/realms/{realm}/protocol/openid-connect/token'
     GET_CLIENTS = '{url}/admin/realms/{realm}/clients'
     GET_CLIENT = '{url}/admin/realms/{realm}/clients/{client_id}'
     GET_USERS = '{url}/admin/realms/{realm}/users'
@@ -18,9 +15,26 @@ class KeycloakEndpoint(StrEnum):
     GET_USER_ROLES = '{url}/admin/realms/{realm}/users/{user_id}/role-mappings/clients/{client_id}'
 
 
+class UserRole(StrEnum):
+    USER = 'user'
+    CUSTOMER = 'customer'
+    STAFF = 'staff'
+    STAFF_ORDER_MANAGER = 'staff_order_manager'
+    STAFF_CUSTOMER_MANAGER = 'staff_customer_manager'
+    STAFF_AXEMAN = 'staff_axeman'
+
+
 class User(BaseModel):
+    user_id: str
     name: str
     roles: List[str]
 
-    def raise_has_role(self) -> None:
-        raise ActionForbidden('User does not have proper role')
+    def check_one_role(self, roles: Union[str, List[str]]) -> None:
+        roles = roles if isinstance(roles, list) else [roles]
+        if len(set(roles).intersection(set(self.roles))) < 1:
+            raise ActionForbidden
+
+    def check_all_roles(self, roles: Union[str, List[str]]) -> None:
+        roles = roles if isinstance(roles, list) else [roles]
+        if not set(roles).issubset(set(self.roles)):
+            raise ActionForbidden

@@ -1,19 +1,15 @@
 import base64
 import json
 
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer
 
-from app import schemas
 from app.core import keycloak
 
-oauth2_schema = OAuth2PasswordBearer(schemas.KeycloakEndpoint.TOKEN)
+oauth2_schema = HTTPBearer()
 
 
 async def verify_token(token: str) -> None:
-    try:
-        await keycloak.get_service_client().verify_token(token)
-    except Exception:
-        raise ValueError('Token verification failed')
+    await keycloak.get_service_client().verify_token(token)
 
 
 def decode_auth_token(token: str) -> dict:

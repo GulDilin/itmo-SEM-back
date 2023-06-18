@@ -53,3 +53,9 @@ class IncorrectDataFormat(Exception):
 class ActionForbidden(Exception):
     def __str__(self) -> str:
         return message.ERROR_ACTION_FORBIDDEN
+
+
+@dataclass
+class Unauthorized(Exception):
+    def __str__(self) -> str:
+        return message.ERROR_NOT_AUTHORIZED

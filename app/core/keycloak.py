@@ -4,11 +4,17 @@ from typing import Dict, List, Optional
 import httpx
 
 from app import schemas
-from app.core import error
-from app.log import logger
+from app.core import error, message
 from app.settings import settings
 
 # REST API DOCS: https://www.keycloak.org/docs-api/20.0.5/rest-api/index.html
+
+
+class KeycloakAuthEndpointKey(schemas.StrEnum):
+    AUTH = 'authorization_endpoint'
+    TOKEN = 'token_endpoint'
+    INTROSPECT = 'introspection_endpoint'
+    USER_INFO = 'userinfo_endpoint'
 
 
 @dataclass
@@ -24,6 +30,10 @@ class KeycloakClient:
             "Authorization": f"Bearer {token}",
         }
 
+    @staticmethod
+    def get_url_for(key: KeycloakAuthEndpointKey) -> str:
+        return settings.KEYCLOAK_OPENID_CONFIG[key]
+
     async def get_token_by_secret(self) -> str:
         if not self.client_secret:
             raise ValueError('Client secret not specified')
@@ -37,12 +47,11 @@ class KeycloakClient:
                 'client_secret': self.client_secret,
                 'client_id': self.client_id,
             }
-            url = schemas.KeycloakEndpoint.TOKEN.value.format(
+            url = self.get_url_for(KeycloakAuthEndpointKey.TOKEN).format(
                 url=self.url,
                 realm=self.realm,
             )
             response = await client.post(url, data=data, headers=headers)
-            logger.info(f'{response.json()=}')
             return response.json().get('access_token')
 
     async def get_client(self, client_id: str) -> Dict:
@@ -51,7 +60,6 @@ class KeycloakClient:
         url = schemas.KeycloakEndpoint.GET_CLIENTS.value.format(
             url=self.url,
             realm=self.realm,
-            # client_id=client_id,
         )
         params = {'clientId': client_id}
         async with httpx.AsyncClient() as client:
@@ -59,7 +67,7 @@ class KeycloakClient:
             response.raise_for_status()
             data = response.json()
             if len(data) < 1:
-                raise error.ItemNotFound(item='Auth Client')
+                raise error.ItemNotFound(item=message.MODEL_AUTH_CLIENT)
             return response.json()[0]
 
     async def get_clients(self) -> List:
@@ -75,7 +83,7 @@ class KeycloakClient:
             return response.json()
 
     async def verify_token(self, token: str) -> None:
-        url = schemas.KeycloakEndpoint.INTROSPECT.value.format(
+        url = self.get_url_for(KeycloakAuthEndpointKey.INTROSPECT).format(
             url=self.url,
             realm=self.realm,
         )
@@ -88,10 +96,9 @@ class KeycloakClient:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(url, data=data)
-                logger.info(f'introspect={response.json()}')
                 response.raise_for_status()
         except Exception:
-            raise ValueError('Token verification failed')
+            raise error.Unauthorized
 
     async def get_users(self) -> List:
         token = await self.get_token_by_secret()
@@ -103,7 +110,6 @@ class KeycloakClient:
         async with httpx.AsyncClient() as client:
             response = await client.get(url, headers=headers)
             response.raise_for_status()
-            logger.info(f'{response.json()=}')
             data = response.json()
             if len(data) == 0:
                 data = []
@@ -117,10 +123,13 @@ class KeycloakClient:
             realm=self.realm,
             user_id=user_id,
         )
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, headers=headers)
-            response.raise_for_status()
-            return response.json()
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url, headers=headers)
+                response.raise_for_status()
+                return response.json()
+        except Exception:
+            raise error.ItemNotFound(item=message.MODEL_USER)
 
     async def get_user_roles(self, user_id: str, client_id: str) -> Dict:
         token = await self.get_token_by_secret()

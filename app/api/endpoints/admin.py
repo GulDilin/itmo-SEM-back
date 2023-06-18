@@ -11,7 +11,9 @@ router = APIRouter()
 
 
 @router.get("/users", response_model=schemas.PaginatedResponse)
-async def get_users() -> schemas.PaginatedResponse:
+async def get_users(
+    user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF])),
+) -> schemas.PaginatedResponse:
     kc = keycloak.get_service_client()
     users = await kc.get_users()
     # TODO: add roles to users
@@ -24,7 +26,12 @@ async def get_users() -> schemas.PaginatedResponse:
 
 
 @router.get("/users/{user_id}")
-async def get_user(user_id: str) -> Dict:
+async def get_user(
+    user_id: str,
+    user_data: schemas.User = Depends(deps.CurrentUser())
+) -> Dict:
+    if user_data.user_id != user_id:
+        user_data.check_one_role(schemas.UserRole.STAFF)
     kc = keycloak.get_service_client()
     user = await kc.get_user_by_id(user_id)
     client = await kc.get_client(client_id=settings.KEYCLOAK_CLIENT_ID_FRONT)
@@ -33,8 +40,9 @@ async def get_user(user_id: str) -> Dict:
     return user
 
 
-@router.get("/token-test")
+@router.get("/service-token-test")
 async def test() -> Dict:
+    # TODO: remove endpoint
     kc = keycloak.get_service_client()
     token = await kc.get_token_by_secret()
     return {'token': token}
@@ -42,6 +50,10 @@ async def test() -> Dict:
 
 @router.get("/verify_staff")
 async def verify_staff(
-    user_data: schemas.User = Depends(deps.CurrentTokenData(['staff']))
+    user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
 ) -> schemas.User:
-    return user_data
+    # TODO: remove endpoint
+    user.check_one_role([schemas.UserRole.STAFF, schemas.UserRole.USER])
+    user.check_one_role(schemas.UserRole.STAFF)
+    user.check_all_roles([schemas.UserRole.STAFF, schemas.UserRole.USER])
+    return user

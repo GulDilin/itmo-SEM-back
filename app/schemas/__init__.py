@@ -1,4 +1,4 @@
-from .keycloak_user import KeycloakEndpoint, User
+from .keycloak_user import KeycloakEndpoint, User, UserRole
 from .order import Order, OrderCreate, OrderStatus, OrderUpdate
 from .order_param_value import (OrderParamValue, OrderParamValueCreate,
                                 OrderParamValueUpdate)

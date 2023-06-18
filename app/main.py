@@ -67,6 +67,11 @@ async def client_exception_handler(req: Request, exc: Exception) -> JSONResponse
     return handle_default_error(exc, status.HTTP_400_BAD_REQUEST)
 
 
+@app.exception_handler(error.Unauthorized)
+async def auth_exception_handler(req: Request, exc: Exception) -> JSONResponse:  # noqa
+    return handle_default_error(exc, status.HTTP_401_UNAUTHORIZED)
+
+
 @app.exception_handler(pydantic.error_wrappers.ValidationError)
 async def pydantic_validation_error_handler(
         request: Request,  # noqa

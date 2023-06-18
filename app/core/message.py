@@ -18,6 +18,7 @@ ERROR_INCORRECT_SORTING_WITH_AVAILABLE = (
     "The available values are '{available}'"
 )
 ERROR_ACTION_FORBIDDEN = "You don't have enough rights to do this"
+ERROR_NOT_AUTHORIZED = "User is not authorized"
 
 """
 MODELS
@@ -27,3 +28,5 @@ MODEL_ORDER_TYPE_PARAM = 'Order Type Param'
 MODEL_ORDER = 'Order'
 MODEL_ORDER_PARAM_VALUE = 'Order Param Value'
 MODEL_ORDER_CONFIRMATION = 'Order Confirmation'
+MODEL_USER = 'User'
+MODEL_AUTH_CLIENT = 'Auth Client'
