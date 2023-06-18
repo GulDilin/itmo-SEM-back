@@ -1,6 +1,6 @@
 from .keycloak_user import KeycloakEndpoint, User, UserRole
 from .order import (CreateOrderStatus, Order, OrderCreate, OrderStatus,
-                    OrderUpdate)
+                    OrderUpdate, raise_order_status_update, raise_order_type)
 from .order_param_value import (OrderParamValue, OrderParamValueCreate,
                                 OrderParamValueUpdate)
 from .order_type import OrderType, OrderTypeCreate, OrderTypeUpdate
