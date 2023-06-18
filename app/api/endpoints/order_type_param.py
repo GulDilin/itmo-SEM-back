@@ -57,7 +57,7 @@ async def update_order_type_param(
 
 
 @router.delete('/{order_type_id}/params/{order_type_param_id}/')
-async def delete_orderorder_type_param(
+async def delete_order_type_param(
         order_type_param: entities.OrderTypeParam = Depends(deps.get_path_order_type_param),
         order_type_param_service: services.OrderTypeParamService = Depends(deps.get_order_type_param_service),
 ) -> None:

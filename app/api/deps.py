@@ -1,10 +1,11 @@
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Any, Dict
 from uuid import UUID
 
 from fastapi import Depends, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app import services
+from app import services, schemas
+from app.core import auth
 from app.db import entities
 from app.db.session import get_session
 
@@ -89,3 +90,21 @@ async def get_path_order_param_value(
         order_id=str(order.id),
         order_type_param_id=str(order_type_param.id),
     )
+
+
+async def get_token(token: str = Depends(auth.oauth2_schema)) -> str:
+    return token
+
+
+async def get_token_data(
+        token: str = Depends(get_token)
+) -> AsyncGenerator[Dict[str, Any], None]:
+    await auth.verify_token(token)
+    yield auth.decode_auth_token(token)
+
+
+async def get_user_data(
+        token_data: dict = Depends(get_token_data),
+) -> AsyncGenerator[schemas.User, None]:
+    print(f'{token_data=}', flush=True)
+    yield schemas.User(name=token_data['name'], roles=token_data['resource_access']['test-client']['roles'])

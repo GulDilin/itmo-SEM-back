@@ -24,7 +24,9 @@ async def get_orders(
     paginator: schemas.PaginationData = Depends(),
     order_type: entities.OrderType = Depends(deps.get_path_order_type),
     order_service: services.OrderService = Depends(deps.get_order_service),
+    user_data: schemas.User = Depends(deps.get_user_data)
 ) -> schemas.PaginatedResponse:
+    print(user_data)
     return await util.get_paginated_response(
         await order_service.read_many_paginated(
             wrapper_class=schemas.Order,
