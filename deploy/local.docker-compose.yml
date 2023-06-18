@@ -40,7 +40,7 @@ services:
         - RELOAD=1
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-DEV}
-      - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS:-*}
+      - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS:-http://localhost:5173}
       - DATABASE_URI=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/sem_data
       - KEYCLOAK_URL_EXTERNAL=${KEYCLOAK_URL_EXTERNAL:-http://localhost:8085}
       - KEYCLOAK_URL=${KEYCLOAK_URL:-http://keycloak:8080}

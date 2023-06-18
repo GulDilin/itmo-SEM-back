@@ -769,14 +769,20 @@
     {
       "id": "de3a9e6e-ac64-429e-be15-a4ba1b99c501",
       "clientId": "frontend-client",
+      "rootUrl": "http://localhost:5173",
+      "baseUrl": "http://localhost:5173",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "*"
+        "http://localhost:5173/main/order",
+        "http://localhost:5173/main",
+        "http://localhost:5173"
       ],
-      "webOrigins": [],
+      "webOrigins": [
+        "http://localhost:5173"
+      ],
       "notBefore": 0,
       "bearerOnly": false,
       "consentRequired": false,
@@ -791,7 +797,7 @@
         "saml.multivalued.roles": "false",
         "saml.force.post.binding": "false",
         "frontchannel.logout.session.required": "false",
-        "post.logout.redirect.uris": "+",
+        "post.logout.redirect.uris": "+##http://localhost:5173##http://localhost:5173/main",
         "oauth2.device.authorization.grant.enabled": "false",
         "backchannel.logout.revoke.offline.tokens": "false",
         "saml.server.signature.keyinfo.ext": "false",
