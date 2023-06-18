@@ -77,7 +77,8 @@ services:
     restart: always
     container_name: sem-keycloak
     volumes:
-      - ../keycloak:/opt/keycloak/data/import
+      - ../keycloak/import:/opt/keycloak/data/import
+      - ../keycloak/themes:/opt/keycloak/themes
       - ../.keycloak:/opt/keycloak/data/h2
     command:
       - "start-dev"

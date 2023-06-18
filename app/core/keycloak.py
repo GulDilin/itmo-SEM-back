@@ -61,10 +61,7 @@ class KeycloakClient:
                 'client_secret': self.client_secret,
                 'client_id': self.client_id,
             }
-            url = self.get_url_for(KeycloakAuthEndpointKey.TOKEN).format(
-                url=self.url,
-                realm=self.realm,
-            )
+            url = self.get_url_for(KeycloakAuthEndpointKey.TOKEN)
             response = await client.post(url, data=data, headers=headers)
             response.raise_for_status()
             return response.json().get('access_token')
@@ -98,10 +95,7 @@ class KeycloakClient:
             return response.json()
 
     async def verify_token(self, token: str) -> None:
-        url = self.get_url_for(KeycloakAuthEndpointKey.INTROSPECT).format(
-            url=self.url,
-            realm=self.realm,
-        )
+        url = self.get_url_for(KeycloakAuthEndpointKey.INTROSPECT)
         data = {
             'grant_type': 'client_credentials',
             'client_secret': self.client_secret,

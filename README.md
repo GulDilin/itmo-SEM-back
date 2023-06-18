@@ -2,7 +2,7 @@
 Software Engineering Metodology course project backend. . Software Engineering Course ITMO magistracy 1-year
 
 
-## Setup dev env
+## Setup required tools
 
 1. Install `python 3.8.*` (https://www.python.org/downloads/release/python-3810/)
 1. Install `docker >= 20.10` (https://www.docker.com/)
@@ -30,16 +30,31 @@ If you got an error with script execiton in **PowerShell**
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned
 ```
 
+## Setup dev env
 1. Check installation `poetry --version`
 1. Run in project root dir `poetry shell`
 1. In opened shell install dependencies with `poetry install`
 1. Set up pre-commit hooks `pre-commit install`
 1. Create copy of `.env.example` to `.env` in the project root
 1. Configure variables (detailed description is in section [env info](#environment))
-1. Run with docker-compose
+1. Run with docker-compose (backend will be unhealthy at first run)
 ```shell
 docker-compose -f deploy/local.docker-compose.yml --env-file .env up --build -d
 ```
+1. Open keycloak admin panel at `localhost:8085` and enable old theme (because it is more useful)
+![Enable old theme](./docs/old-theme-1.png)
+1. Reload page `http://localhost:8085/admin`
+1. **regenerate secret** for `service-client` and copy
+![Regenerate secret](./docs/regenerate-secret.png)
+1. Write secret to `.env`
+```
+KEYCLOAK_CLIENT_SECRET_SERIVCE=<generated-secret>
+```
+1. Run with docker-compose again
+```shell
+docker-compose -f deploy/local.docker-compose.yml --env-file .env up --build -d
+```
+
 
 ## Environment
 
@@ -53,6 +68,14 @@ POSTGRES_USER=postgres      # Required | Postgres user. It used only with docker
 POSTGRES_PASSWORD=postgres  # Required | Postgres password. It used only with docker to set up postgres and generate DATABASE_URI
 POSTGRES_DB=sem_data             # Required | Postgres db name. It used only with docker to set up postgres and generate DATABASE_URI
 DATABASE_URI=postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/sem_data  # Required
+
+KEYCLOAK_ADMIN=admin                # Optional
+KEYCLOAK_ADMIN_PASSWORD=admin       # Optional
+KEYCLOAK_URL=http://localhost:8085  # Required for console run, Optional with docker
+KEYCLOAK_REALM=MPI
+KEYCLOAK_CLIENT_ID_FRONT=frontend-client
+KEYCLOAK_CLIENT_ID_SERIVCE=service-client
+KEYCLOAK_CLIENT_SECRET_SERIVCE=client_secret
 ```
 
 ### Requirements export

@@ -54,10 +54,24 @@ class Settings(BaseSettings):
                 f'{values["KEYCLOAK_URL"]}/realms/{values["KEYCLOAK_REALM"]}/.well-known/openid-configuration'
             ).json()
             print(f'{open_id_config=}')
-            return open_id_config
         except Exception:
             raise ValueError('''
                 Failed to connect to KEYCLOAK. Check KEYCLOAK_URL and KEYCLOAK_REALM variable.
+            ''')
+        try:
+            headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+            data = {
+                'grant_type': 'client_credentials',
+                'client_secret': values['KEYCLOAK_CLIENT_SECRET_SERIVCE'],
+                'client_id': values['KEYCLOAK_CLIENT_ID_SERIVCE'],
+            }
+            response = requests.post(open_id_config['token_endpoint'], data=data, headers=headers)
+            response.raise_for_status()
+            return open_id_config
+        except Exception:
+            raise ValueError('''
+                Failed to auth with service client on KEYCLOAK.
+                Check KEYCLOAK_CLIENT_ID_SERIVCE and KEYCLOAK_CLIENT_SECRET_SERIVCE variable.
             ''')
 
     PROJECT_NAME: str = PYPROJECT_CONTENT['name']
