@@ -9,17 +9,6 @@ from app.db import entities
 from app.db.session import get_session
 
 
-async def get_order_service(
-        session: AsyncSession = Depends(get_session)
-) -> AsyncGenerator[services.OrderService, None]: yield services.OrderService(session)
-
-
-async def get_path_order(
-        order_service: services.OrderService = Depends(get_order_service),
-        order_id: UUID = Path(None, title='Order ID'),
-) -> entities.Order: return await order_service.read_one(id=str(order_id))
-
-
 async def get_order_type_service(
         session: AsyncSession = Depends(get_session)
 ) -> AsyncGenerator[services.OrderTypeService, None]: yield services.OrderTypeService(session)
@@ -34,6 +23,19 @@ async def get_path_order_type(
         return await order_type_service.read_one(id=str(order_type_id))
     except ValueError:
         return await order_type_service.read_one(name=str(order_type_id))
+
+
+async def get_order_service(
+        session: AsyncSession = Depends(get_session)
+) -> AsyncGenerator[services.OrderService, None]: yield services.OrderService(session)
+
+
+async def get_path_order(
+        order_type: entities.OrderType = Depends(get_path_order_type),
+        order_service: services.OrderService = Depends(get_order_service),
+        order_id: UUID = Path(None, title='Order ID'),
+) -> entities.Order:
+    return await order_service.read_one(id=str(order_id), order_type_id=str(order_type.id))
 
 
 async def get_order_type_param_service(

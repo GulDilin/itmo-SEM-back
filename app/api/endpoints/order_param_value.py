@@ -8,7 +8,7 @@ from app.db import entities
 router = APIRouter()
 
 
-@router.post('/{order_id}/params/{order_type_param_id}', response_model=schemas.OrderParamValue)
+@router.post('/{order_type_id}/order/{order_id}/params/{order_type_param_id}', response_model=schemas.OrderParamValue)
 async def create_order_type(
         item: schemas.OrderParamValueCreate,
         order: entities.Order = Depends(deps.get_path_order),
@@ -24,7 +24,7 @@ async def create_order_type(
     ))
 
 
-@router.get('/{order_id}/params/', response_model=schemas.PaginatedResponse)
+@router.get('/{order_type_id}/order/{order_id}/params/', response_model=schemas.PaginatedResponse)
 async def get_orders(
         paginator: schemas.PaginationData = Depends(),
         order: entities.OrderType = Depends(deps.get_path_order),
@@ -41,14 +41,14 @@ async def get_orders(
     )
 
 
-@router.get('/{order_id}/params/{order_type_param_id}/', response_model=schemas.OrderParamValue)
+@router.get('/{order_type_id}/order/{order_id}/params/{order_type_param_id}/', response_model=schemas.OrderParamValue)
 async def get_order_param(
         order_param_value: entities.OrderTypeParam = Depends(deps.get_path_order_param_value),
 ) -> schemas.OrderParamValue:
     return schemas.OrderParamValue(**jsonable_encoder(order_param_value))
 
 
-@router.put('/{order_id}/params/{order_type_param_id}/', response_model=schemas.OrderParamValue)
+@router.put('/{order_type_id}/order/{order_id}/params/{order_type_param_id}/', response_model=schemas.OrderParamValue)
 async def update_order_param(
         update_data: schemas.OrderParamValueUpdate,
         order_param_value: entities.OrderTypeParam = Depends(deps.get_path_order_param_value),
@@ -61,7 +61,7 @@ async def update_order_param(
     return schemas.OrderParamValue(**jsonable_encoder(updated))
 
 
-@router.delete('/{order_id}/params/{order_type_param_id}/')
+@router.delete('/{order_type_id}/order/{order_id}/params/{order_type_param_id}/')
 async def delete_order_param(
         order_param_value: entities.OrderTypeParam = Depends(deps.get_path_order_param_value),
         order_param_value_service: services.OrderParamValueService = Depends(deps.get_order_param_value_service),
