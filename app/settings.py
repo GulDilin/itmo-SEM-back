@@ -16,8 +16,12 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = 'DEV'
     BACKEND_CORS_ORIGINS: str = '*'
     DATABASE_URI: str = ''
+
     KEYCLOAK_URL: str = ''
     KEYCLOAK_REALM: str = ''
+    KEYCLOAK_CLIENT_ID_FRONT: str = ''
+    KEYCLOAK_CLIENT_ID_SERIVCE: str = ''
+    KEYCLOAK_CLIENT_SECRET_SERIVCE: str = ''
 
     @validator('DATABASE_URI')
     def validate_db(cls, v: str, values: dict) -> str:  # noqa

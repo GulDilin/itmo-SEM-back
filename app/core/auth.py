@@ -1,34 +1,17 @@
 import base64
 import json
 
-import httpx
 from fastapi.security import OAuth2PasswordBearer
 
 from app import schemas
-from app.settings import settings
+from app.core import keycloak
 
-openid_url = f'{settings.KEYCLOAK_URL}/auth/admin/realms/{settings.KEYCLOAK_REALM}/protocol/openid-connect'
-verify_url = f'{openid_url}/userinfo'
-token_url = f'{openid_url}/token'
-auth_url = f'{openid_url}/auth'
-
-oauth2_schema = OAuth2PasswordBearer(
-    token_url,
-)
+oauth2_schema = OAuth2PasswordBearer(schemas.KeycloakEndpoint.TOKEN)
 
 
-async def verify_token(token: str) -> dict:
-    userinfo_url = schemas.KeycloakEndpoint.USER_INFO.format(
-        url=settings.KEYCLOAK_URL,
-        realm=settings.KEYCLOAK_REALM
-    )
+async def verify_token(token: str) -> None:
     try:
-        headers = {
-            "Authorization": f"Bearer {token}",
-        }
-        async with httpx.AsyncClient() as client:
-            response = await client.get(userinfo_url, headers=headers)
-            return response.json()
+        await keycloak.get_service_client().verify_token(token)
     except Exception:
         raise ValueError('Token verification failed')
 

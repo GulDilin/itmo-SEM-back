@@ -121,6 +121,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env.*
 .venv
 env/
 venv/
@@ -160,4 +161,5 @@ cython_debug/
 #.idea/
 
 .database
+.keycloak
 .idea

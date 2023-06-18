@@ -1,11 +1,11 @@
-from typing import AsyncGenerator, Any, Dict
+from typing import Any, AsyncGenerator, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import Depends, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app import services, schemas
-from app.core import auth
+from app import schemas, services
+from app.core import auth, error
 from app.db import entities
 from app.db.session import get_session
 
@@ -107,4 +107,17 @@ async def get_user_data(
         token_data: dict = Depends(get_token_data),
 ) -> AsyncGenerator[schemas.User, None]:
     print(f'{token_data=}', flush=True)
-    yield schemas.User(name=token_data['name'], roles=token_data['resource_access']['test-client']['roles'])
+    yield schemas.User(name=token_data['preferred_username'], roles=token_data['roles'])
+
+
+class CurrentTokenData:
+    def __init__(self, required_roles: Optional[List[str]] = None):
+        self.required_roles = required_roles
+
+    async def __call__(
+        self,
+        user_data: schemas.User = Depends(get_user_data),
+    ) -> schemas.User:
+        if self.required_roles and not set(self.required_roles).issubset(set(user_data.roles)):
+            raise error.ActionForbidden()
+        return user_data

@@ -28,6 +28,8 @@ services:
       options:
         max-size: "10m"
         max-file: "10"
+
+
   backend:
     restart: unless-stopped
     container_name: sem-backend
@@ -38,16 +40,21 @@ services:
         - RELOAD=1
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-DEV}
-      - DATABASE_URI=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/sem_data
-      - KEYCLOAK_URL=${KEYCLOAK_URL}
-      - KEYCLOAK_REALM=${KEYCLOAK_REALM}
       - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS:-*}
+      - DATABASE_URI=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/sem_data
+      - KEYCLOAK_URL=${KEYCLOAK_URL:-http://keycloak:8080}
+      - KEYCLOAK_REALM=${KEYCLOAK_REALM:-MPI}
+      - KEYCLOAK_CLIENT_ID_FRONT=${KEYCLOAK_CLIENT_ID_FRONT:-frontend-client}
+      - KEYCLOAK_CLIENT_ID_SERIVCE=${KEYCLOAK_CLIENT_ID_SERIVCE:-service-client}
+      - KEYCLOAK_CLIENT_SECRET_SERIVCE=${KEYCLOAK_CLIENT_SECRET_SERIVCE}
     volumes:
       - ../app:/backend/app
     ports:
       - "5010:5000"
     depends_on:
       db:
+        condition: service_healthy
+      keycloak:
         condition: service_healthy
     links:
       - db
@@ -62,22 +69,28 @@ services:
       options:
         max-size: "10m"
         max-file: "10"
+
+
   keycloak:
-    image: jboss/keycloak:16.1.1
+    image: quay.io/keycloak/keycloak:20.0.5
     restart: always
     container_name: sem-keycloak
     volumes:
-      - ../.keycloak:/opt/jboss/keycloak/imports
+      - ../keycloak:/opt/keycloak/data/import
+      - ../.keycloak:/opt/keycloak/data/h2
     command:
-      - "-b 0.0.0.0 -Dkeycloak.profile.feature.upload_scripts=enabled -Dkeycloak.import=/opt/jboss/keycloak/imports/realm-export.json"
+      - "start-dev"
+      - "--import-realm"
     environment:
-      KEYCLOAK_USER: ${KEYCLOAK_USER:-admin}
-      KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD:-admin}
-      DB_VENDOR: h2
-      PROXY_ADDRESS_FORWARDING: "true"
-      KEYCLOAK_LOGLEVEL: DEBUG
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HEALTH_ENABLED: true
+      KC_LOG_LEVEL: INFO
+      KC_PROXY: passthrough
     ports:
       - '8085:8080'
-    depends_on:
-      db:
-        condition: service_healthy
+    healthcheck:
+      test: curl --head -fsS http://localhost:8080/health/ready
+      interval: 5s
+      timeout: 5s
+      retries: 15
