@@ -13,6 +13,10 @@ class KeycloakEndpoint(StrEnum):
     GET_USERS = '{url}/admin/realms/{realm}/users'
     GET_USER = '{url}/admin/realms/{realm}/users/{user_id}'
     GET_USER_ROLES = '{url}/admin/realms/{realm}/users/{user_id}/role-mappings/clients/{client_id}'
+    GET_INSTALLATION_CONFIG = (
+        '{url}/admin/realms/{realm}/clients/{client_id}'
+        '/installation/providers/keycloak-oidc-keycloak-json'
+    )
 
 
 class UserRole(StrEnum):
