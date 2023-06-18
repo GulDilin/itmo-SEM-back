@@ -28,8 +28,9 @@ async def get_users(
 @router.get("/auth/config")
 async def get_auth_config() -> Dict:
     kc = keycloak.get_service_client()
-    # client = await kc.get_client(client_id=settings.KEYCLOAK_CLIENT_ID_FRONT)
-    return await kc.get_auth_config(client_id=settings.KEYCLOAK_CLIENT_ID_FRONT)
+    config = await kc.get_auth_config(client_id=settings.KEYCLOAK_CLIENT_ID_FRONT)
+    config['auth-server-url'] = settings.KEYCLOAK_URL_EXTERNAL
+    return config
 
 
 @router.get("/users/{user_id}")

@@ -38,6 +38,7 @@ class Settings(BaseSettings):
         return v
 
     KEYCLOAK_URL: str
+    KEYCLOAK_URL_EXTERNAL: str
     KEYCLOAK_REALM: str
     KEYCLOAK_CLIENT_ID_FRONT: str
     KEYCLOAK_CLIENT_ID_SERIVCE: str
