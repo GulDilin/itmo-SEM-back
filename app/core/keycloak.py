@@ -109,6 +109,47 @@ class KeycloakClient:
         except Exception:
             raise error.Unauthorized
 
+    async def get_roles(self, token: Optional[str] = None) -> List:
+        token = token if token else await self.get_token_by_secret()
+        headers = self.get_token_auth_headers(token)
+        client_id = (
+            await self.get_client(
+                client_id=settings.KEYCLOAK_CLIENT_ID_FRONT,
+                token=token))['id']
+        url = schemas.KeycloakEndpoint.GET_ROLES.value.format(
+            url=self.url,
+            realm=self.realm,
+            client_id=client_id
+        )
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            if len(data) == 0:
+                data = []
+            return data
+
+    async def get_role_with_users(self, role_name: str, token: Optional[str] = None) -> List:
+        token = token if token else await self.get_token_by_secret()
+        headers = self.get_token_auth_headers(token)
+        client_id = (
+            await self.get_client(
+                client_id=settings.KEYCLOAK_CLIENT_ID_FRONT,
+                token=token))['id']
+        url = schemas.KeycloakEndpoint.GET_ROLE_USERS.value.format(
+            url=self.url,
+            realm=self.realm,
+            client_id=client_id,
+            role_name=role_name
+        )
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            if len(data) == 0:
+                data = []
+            return data
+
     async def get_users(self, token: Optional[str] = None) -> List:
         token = token if token else await self.get_token_by_secret()
         headers = self.get_token_auth_headers(token)
@@ -122,6 +163,30 @@ class KeycloakClient:
             data = response.json()
             if len(data) == 0:
                 data = []
+            return data
+
+    async def get_users_with_roles(self, token: Optional[str] = None) -> List:
+        token = token if token else await self.get_token_by_secret()
+        headers = self.get_token_auth_headers(token)
+        url = schemas.KeycloakEndpoint.GET_USERS.value.format(
+            url=self.url,
+            realm=self.realm,
+        )
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            if len(data) == 0:
+                data = []
+            client_id = (
+                await self.get_client(
+                    client_id=settings.KEYCLOAK_CLIENT_ID_FRONT,
+                    token=token))['id']
+            for d in data:
+                d['roles'] = await self.get_user_roles(
+                    client_id=client_id,
+                    token=token,
+                    user_id=d['id'])
             return data
 
     async def get_user_by_id(self, user_id: str, token: Optional[str] = None) -> Dict:

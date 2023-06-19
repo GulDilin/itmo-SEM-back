@@ -1,6 +1,6 @@
 from typing import Dict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 
 from app import schemas
 from app.api import deps
@@ -12,11 +12,39 @@ router = APIRouter()
 
 @router.get("/users", response_model=schemas.PaginatedResponse)
 async def get_users(
-    user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF])),
+        user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF])),
 ) -> schemas.PaginatedResponse:
     kc = keycloak.get_service_client()
-    users = await kc.get_users()
-    # TODO: add roles to users
+    users = await kc.get_users_with_roles()
+    return schemas.PaginatedResponse(
+        results=users,
+        count=len(users),
+        next=None,
+        previous=None,
+    )
+
+
+@router.get("/roles", response_model=schemas.PaginatedResponse)
+async def get_roles(
+        user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF])),
+) -> schemas.PaginatedResponse:
+    kc = keycloak.get_service_client()
+    roles = await kc.get_roles()
+    return schemas.PaginatedResponse(
+        results=roles,
+        count=len(roles),
+        next=None,
+        previous=None,
+    )
+
+
+@router.get("/roles/{role_name}/users", response_model=schemas.PaginatedResponse)
+async def get_role_with_users(
+        user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF])),
+        role_name: str = Path(None, title='Role Name')
+) -> schemas.PaginatedResponse:
+    kc = keycloak.get_service_client()
+    users = await kc.get_role_with_users(role_name=role_name)
     return schemas.PaginatedResponse(
         results=users,
         count=len(users),
@@ -35,8 +63,8 @@ async def get_auth_config() -> Dict:
 
 @router.get("/users/{user_id}")
 async def get_user(
-    user_id: str,
-    user_data: schemas.User = Depends(deps.CurrentUser())
+        user_id: str,
+        user_data: schemas.User = Depends(deps.CurrentUser())
 ) -> Dict:
     if user_data.user_id != user_id:
         user_data.check_one_role(schemas.UserRole.STAFF)
@@ -58,7 +86,7 @@ async def test() -> Dict:
 
 @router.get("/verify_staff")
 async def verify_staff(
-    user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
+        user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
 ) -> schemas.User:
     # TODO: remove endpoint
     user.check_one_role([schemas.UserRole.STAFF, schemas.UserRole.USER])
