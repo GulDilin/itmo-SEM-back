@@ -14,6 +14,7 @@ async def create_order_type(
         order: entities.Order = Depends(deps.get_path_order),
         order_type_param: entities.OrderTypeParam = Depends(deps.get_path_order_type_param_by_order),
         order_param_value_service: services.OrderParamValueService = Depends(deps.get_order_param_value_service),
+        user_data: schemas.User = Depends(deps.get_user_data)
 ) -> schemas.OrderParamValue:
     return schemas.OrderParamValue(**jsonable_encoder(
         await order_param_value_service.create(
@@ -29,6 +30,7 @@ async def get_orders(
         paginator: schemas.PaginationData = Depends(),
         order: entities.OrderType = Depends(deps.get_path_order),
         order_param_value_service: services.OrderParamValueService = Depends(deps.get_order_param_value_service),
+        user_data: schemas.User = Depends(deps.get_user_data)
 ) -> schemas.PaginatedResponse:
     return await util.get_paginated_response(
         await order_param_value_service.read_many_paginated(
@@ -44,6 +46,7 @@ async def get_orders(
 @router.get('/{order_type_id}/order/{order_id}/params/{order_type_param_id}/', response_model=schemas.OrderParamValue)
 async def get_order_param(
         order_param_value: entities.OrderTypeParam = Depends(deps.get_path_order_param_value),
+        user_data: schemas.User = Depends(deps.get_user_data)
 ) -> schemas.OrderParamValue:
     return schemas.OrderParamValue(**jsonable_encoder(order_param_value))
 
@@ -53,6 +56,7 @@ async def update_order_param(
         update_data: schemas.OrderParamValueUpdate,
         order_param_value: entities.OrderTypeParam = Depends(deps.get_path_order_param_value),
         order_param_value_service: services.OrderParamValueService = Depends(deps.get_order_param_value_service),
+        user_data: schemas.User = Depends(deps.get_user_data)
 ) -> schemas.OrderParamValue:
     updated = await order_param_value_service.update(
         id=str(order_param_value.id),
@@ -65,5 +69,6 @@ async def update_order_param(
 async def delete_order_param(
         order_param_value: entities.OrderTypeParam = Depends(deps.get_path_order_param_value),
         order_param_value_service: services.OrderParamValueService = Depends(deps.get_order_param_value_service),
+        user_data: schemas.User = Depends(deps.get_user_data)
 ) -> None:
     await order_param_value_service.delete(id=order_param_value.id)

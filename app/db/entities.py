@@ -1,9 +1,10 @@
 import uuid
+from typing import List
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.sql import func
-from typing import List
+
 from .base_class import Base
 
 
@@ -74,6 +75,12 @@ class Order(TimeStampedWithId):
         uselist=True,
         lazy='joined',
     )
+    history: Mapped[List['OrderStatusUpdate']] = relationship(
+        "OrderStatusUpdate",
+        back_populates="order",
+        uselist=True,
+        lazy='joined',
+    )
 
 
 OrderSortingFields = {*DefaultSortingFields, 'status', 'order_type_id'}
@@ -99,3 +106,14 @@ class OrderConfirmation(TimeStampedWithId):
 
 
 OrderConfirmationSortingFields = {*DefaultSortingFields, 'signed', 'order_id'}
+
+
+class OrderStatusUpdate(TimeStampedWithId):
+    user = sa.Column(sa.String(100))
+    old_status = sa.Column(sa.String(100))
+    new_status = sa.Column(sa.String(100))
+    order: Mapped[Order] = relationship('Order', cascade="all,delete")
+    order_id = sa.Column(sa.String(50), sa.ForeignKey('order.id'), nullable=False)
+
+
+OrderStatusUpdatenSortingFields = {*DefaultSortingFields, 'signed', 'order_id'}

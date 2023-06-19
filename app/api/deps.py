@@ -33,6 +33,11 @@ async def get_order_service(
 ) -> AsyncGenerator[services.OrderService, None]: yield services.OrderService(session)
 
 
+async def get_update_status_service(
+        session: AsyncSession = Depends(get_session)
+) -> AsyncGenerator[services.OrderStatusUpdateService, None]: yield services.OrderStatusUpdateService(session)
+
+
 async def get_path_order(
         order_type: entities.OrderType = Depends(get_path_order_type),
         order_service: services.OrderService = Depends(get_order_service),
@@ -122,8 +127,8 @@ class CurrentUser:
         self.required_roles = required_roles
 
     async def __call__(
-        self,
-        user: schemas.User = Depends(get_user_data),
+            self,
+            user: schemas.User = Depends(get_user_data),
     ) -> schemas.User:
         if self.required_roles:
             user.check_all_roles(self.required_roles)
