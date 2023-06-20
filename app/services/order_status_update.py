@@ -23,7 +23,6 @@ class OrderStatusUpdateService(BaseService):
             new_order_status: schemas.OrderStatus,
             old_order_status: schemas.OrderStatus,
     ) -> entities.Order:
-        schemas.raise_order_status_update(user=user, new_status=new_order_status, old_status=old_order_status)
         return await self._create(item=entities.OrderStatusUpdate(
             order_id=order_id,
             new_status=new_order_status,

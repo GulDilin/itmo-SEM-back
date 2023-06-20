@@ -39,14 +39,16 @@ order_status_requisites: Dict[str, List[str]] = {
     OrderStatus.IN_PROGRESS: [UserRole.STAFF_AXEMAN],
     OrderStatus.DONE: [UserRole.STAFF_AXEMAN],
     OrderStatus.ACCEPTED: [UserRole.STAFF_ORDER_MANAGER],
+    OrderStatus.TO_REMOVE: [UserRole.STAFF_ORDER_MANAGER],
+    OrderStatus.REMOVED: [],
 }
 
 allowed_status_transitions: Dict[str, List[str]] = {
-    OrderStatus.NEW: [OrderStatus.READY],
-    OrderStatus.READY: [OrderStatus.NEW, OrderStatus.IN_PROGRESS],
-    OrderStatus.IN_PROGRESS: [OrderStatus.DONE],
-    OrderStatus.DONE: [OrderStatus.ACCEPTED, OrderStatus.READY],
-    OrderStatus.ACCEPTED: [],
+    OrderStatus.NEW: [OrderStatus.READY, OrderStatus.TO_REMOVE],
+    OrderStatus.READY: [OrderStatus.NEW, OrderStatus.IN_PROGRESS, OrderStatus.TO_REMOVE],
+    OrderStatus.IN_PROGRESS: [OrderStatus.DONE, OrderStatus.TO_REMOVE],
+    OrderStatus.DONE: [OrderStatus.ACCEPTED, OrderStatus.READY, OrderStatus.TO_REMOVE],
+    OrderStatus.ACCEPTED: [OrderStatus.TO_REMOVE],
     OrderStatus.TO_REMOVE: [
         OrderStatus.NEW,
         OrderStatus.READY,
