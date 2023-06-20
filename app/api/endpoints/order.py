@@ -6,6 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from app import schemas, services
 from app.api import deps, util
 from app.db import entities
+from app.schemas.order import OrderTypeName
 
 router = APIRouter()
 router1 = APIRouter()
@@ -36,6 +37,9 @@ async def get_orders(
 ) -> schemas.PaginatedResponse:
     if order_type:
         filter_data['order_type_id'] = str(order_type.id)
+    # TODO discuss
+    # if order_type.name != OrderTypeName.BATH_ORDER:
+    #     user_data.check_one_role([schemas.UserRole.STAFF])
     return await util.get_paginated_response(
         await order_service.read_many_paginated(
             wrapper_class=schemas.Order,
@@ -52,8 +56,11 @@ async def get_orders(
 @router1.get('/', response_model=schemas.Order)
 async def get_order(
         order: entities.Order = Depends(deps.get_path_order),
+        order_type: entities.OrderType = Depends(deps.get_path_order_type),
         user_data: schemas.User = Depends(deps.get_user_data)
 ) -> schemas.Order:
+    if order_type.name != OrderTypeName.BATH_ORDER:
+        user_data.check_one_role([schemas.UserRole.STAFF])
     return schemas.Order(**jsonable_encoder(order))
 
 
@@ -62,6 +69,7 @@ async def update_order(
         order_update_data: schemas.OrderUpdate,
         order: entities.Order = Depends(deps.get_path_order),
         order_type: entities.OrderType = Depends(deps.get_path_order_type),
+        order_type_service: services.OrderTypeService = Depends(deps.get_order_type_service),
         order_service: services.OrderService = Depends(deps.get_order_service),
         status_service: services.OrderStatusUpdateService = Depends(deps.get_update_status_service),
         user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
@@ -70,6 +78,11 @@ async def update_order(
     if order_update_data.status is not None:
         schemas.raise_order_status_update(user=user, old_status=schemas.OrderStatus(order.status),
                                           new_status=order_update_data.status)
+        schemas.raise_ready_order_update(new_status=order_update_data.status, order=order)
+        defect_order_type = await order_type_service.read_one(name=OrderTypeName.TIMBER_DEFECT_ORDER)
+        schemas.raise_accepted_order_update(
+            new_status=order_update_data.status,
+            child_orders=await order_service.read_many(parent_order_id=order.id, order_type_id=defect_order_type.id))
         await status_service.create(
             user=user,
             new_order_status=order_update_data.status,

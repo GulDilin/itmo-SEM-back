@@ -65,11 +65,13 @@ async def internal_server_error_handler(request: Request, exc: Exception) -> JSO
 @app.exception_handler(error.IncorrectSorting)
 @app.exception_handler(error.EntityEntryAlreadyExists)
 async def client_exception_handler(req: Request, exc: Exception) -> JSONResponse:  # noqa
+    logger.error(f"Bad request (400) : {traceback.format_exc()}")
     return handle_default_error(exc, status.HTTP_400_BAD_REQUEST)
 
 
 @app.exception_handler(error.Unauthorized)
 async def auth_exception_handler(req: Request, exc: Exception) -> JSONResponse:  # noqa
+    logger.error(f"Unauthorized (401) : {traceback.format_exc()}")
     return handle_default_error(exc, status.HTTP_401_UNAUTHORIZED)
 
 
@@ -91,6 +93,7 @@ async def not_found_exception_handler(req: Request, exc: Exception) -> JSONRespo
 
 @app.exception_handler(error.ActionForbidden)
 async def forbidden_exception_handler(req: Request, exc: Exception) -> JSONResponse:  # noqa
+    logger.error(f"Forbidden (404) : {traceback.format_exc()}")
     return handle_default_error(exc, status.HTTP_403_FORBIDDEN)
 
 

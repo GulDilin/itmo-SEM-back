@@ -1,7 +1,10 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence
 
 from pydantic import BaseModel
 
+from app.log import logger
+
+from ..db import entities
 from .keycloak_user import User, UserRole
 from .order_param_value import OrderParamValue
 from .order_type import OrderType
@@ -68,7 +71,7 @@ class CreateOrderStatus(BaseModel):
     order_type_id: str
 
 
-class OrderStatusUpdate(BaseModel):
+class OrderStatusUpdate(TimestampedWithId):
     user: str
     old_status: OrderStatus
     new_status: OrderStatus
@@ -115,3 +118,27 @@ def raise_order_status_update(user: User, old_status: OrderStatus, new_status: O
     user.check_one_role(order_status_requisites[new_status])
     if new_status not in allowed_status_transitions[old_status]:
         raise ValueError(f'Could not transition from {old_status} to {new_status}')
+
+
+def raise_ready_order_update(new_status: OrderStatus, order: entities.Order) -> None:
+    if new_status != OrderStatus.READY:
+        return
+    errors = ''
+    order_params_types = {}
+    for order_param in order.params:
+        order_params_types[order_param.order_type_param_id] = order_param.value
+    for param in order.order_type.params:
+        if param.required and (param.id not in order_params_types.keys() or order_params_types[param.id] is None):
+            errors += f'Param {param.name} should be set\n'
+    if len(errors) > 0:
+        raise ValueError(errors)
+
+
+def raise_accepted_order_update(new_status: OrderStatus,
+                                child_orders: Sequence[entities.Order]) -> None:
+    if new_status != OrderStatus.ACCEPTED:
+        return
+    logger.info(child_orders)
+    for child_order in child_orders:
+        if child_order.status != OrderStatus.ACCEPTED:
+            raise ValueError('All defect orders should be accepted')
