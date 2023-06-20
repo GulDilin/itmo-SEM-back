@@ -7,9 +7,10 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app import schemas
+from app import schemas, services
 from app.api.api import router as api_router
 from app.core import error
+from app.db.session import wrap_session
 from app.log import logger
 from app.settings import settings
 
@@ -96,6 +97,9 @@ async def forbidden_exception_handler(req: Request, exc: Exception) -> JSONRespo
 
 async def test_job() -> None:
     logger.info('TEST JOB RUN')
+    async with wrap_session() as session:
+        order_service = services.OrderService(session)
+        await order_service.exists(id='ananas')
 
 
 @app.on_event("startup")
