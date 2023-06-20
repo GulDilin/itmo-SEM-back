@@ -4,6 +4,7 @@ from app import schemas
 from app.core import message
 from app.db import entities
 
+from ..schemas.order import OrderTypeName
 from .base import BaseService
 
 
@@ -21,6 +22,8 @@ class OrderService(BaseService):
             item: schemas.OrderCreate,
             order_type: entities.OrderType,
     ) -> entities.Order:
+        if order_type.name != OrderTypeName.BATH_ORDER and item.parent_order_id is None:
+            raise ValueError('Parent Order ID should be filled')
         return await self._create(item=entities.Order(
             status=schemas.OrderStatus.NEW,
             user_customer=item.user_customer,

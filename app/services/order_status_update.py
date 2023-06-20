@@ -13,7 +13,7 @@ class OrderStatusUpdateService(BaseService):
             db_session=db_session,
             entity=entities.OrderStatusUpdate,
             entity_name=message.MODEL_ORDER,
-            sorting_fields=entities.OrderStatusUpdatenSortingFields,
+            sorting_fields=entities.OrderStatusUpdateSortingFields,
         )
 
     async def create(

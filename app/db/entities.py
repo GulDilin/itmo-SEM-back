@@ -89,7 +89,7 @@ OrderSortingFields = {*DefaultSortingFields, 'status', 'order_type_id'}
 class OrderParamValue(TimeStampedWithId):
     # TODO: add unique constraint for order_id + order_type_param_id
     value = sa.Column(sa.String(100))
-    order_type_param: Mapped[OrderType] = relationship('OrderTypeParam', cascade="all,delete")
+    order_type_param: Mapped[OrderTypeParam] = relationship('OrderTypeParam', cascade="all,delete")
     order_type_param_id = sa.Column(sa.String(50), sa.ForeignKey('order_type_param.id'), nullable=False)
     order: Mapped[Order] = relationship('Order', cascade="all,delete", back_populates="params")
     order_id = sa.Column(sa.String(50), sa.ForeignKey('order.id'), nullable=False)
@@ -116,4 +116,4 @@ class OrderStatusUpdate(TimeStampedWithId):
     order_id = sa.Column(sa.String(50), sa.ForeignKey('order.id'), nullable=False)
 
 
-OrderStatusUpdatenSortingFields = {*DefaultSortingFields, 'signed', 'order_id'}
+OrderStatusUpdateSortingFields = {*DefaultSortingFields, 'order_id'}
