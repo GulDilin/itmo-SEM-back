@@ -53,13 +53,13 @@ async def get_orders(
 
 
 @router.get('/{order_type_id}/order/{order_id}/', response_model=schemas.Order)
-@router1.get('/', response_model=schemas.Order)
+@router1.get('/{order_id}/', response_model=schemas.Order)
 async def get_order(
         order: entities.Order = Depends(deps.get_path_order),
         order_type: entities.OrderType = Depends(deps.get_path_order_type),
         user_data: schemas.User = Depends(deps.get_user_data)
 ) -> schemas.Order:
-    if order_type.name != OrderTypeName.BATH_ORDER:
+    if order.order_type.name != OrderTypeName.BATH_ORDER:
         user_data.check_one_role([schemas.UserRole.STAFF])
     return schemas.Order(**jsonable_encoder(order))
 
