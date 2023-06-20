@@ -65,7 +65,7 @@ class Order(TimeStampedWithId):
     status = sa.Column(sa.String(100))
     user_customer = sa.Column(sa.String(100))
     user_implementer = sa.Column(sa.String(100))
-    order_type: Mapped[OrderType] = relationship('OrderType', cascade="all,delete")
+    order_type: Mapped[OrderType] = relationship('OrderType', cascade="all,delete", lazy='joined')
     order_type_id = sa.Column(sa.String(50), sa.ForeignKey('order_type.id'), nullable=False)
     parent_order: Mapped['Order'] = relationship('Order', cascade="all,delete")
     parent_order_id = sa.Column(sa.String(50), sa.ForeignKey('order.id'), nullable=True)

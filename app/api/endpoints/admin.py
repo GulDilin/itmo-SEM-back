@@ -10,7 +10,7 @@ from app.settings import settings
 router = APIRouter()
 
 
-@router.get("/users", response_model=schemas.PaginatedResponse)
+@router.get("/users/", response_model=schemas.PaginatedResponse)
 async def get_users(
         user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF])),
 ) -> schemas.PaginatedResponse:
@@ -24,7 +24,7 @@ async def get_users(
     )
 
 
-@router.get("/roles", response_model=schemas.PaginatedResponse)
+@router.get("/roles/", response_model=schemas.PaginatedResponse)
 async def get_roles(
         user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF])),
 ) -> schemas.PaginatedResponse:
@@ -38,7 +38,7 @@ async def get_roles(
     )
 
 
-@router.get("/roles/{role_name}/users", response_model=schemas.PaginatedResponse)
+@router.get("/roles/{role_name}/users/", response_model=schemas.PaginatedResponse)
 async def get_role_with_users(
         user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF])),
         role_name: str = Path(None, title='Role Name')
@@ -53,7 +53,7 @@ async def get_role_with_users(
     )
 
 
-@router.get("/auth/config")
+@router.get("/auth/config/")
 async def get_auth_config() -> Dict:
     kc = keycloak.get_service_client()
     config = await kc.get_auth_config(client_id=settings.KEYCLOAK_CLIENT_ID_FRONT)
@@ -61,7 +61,7 @@ async def get_auth_config() -> Dict:
     return config
 
 
-@router.get("/users/{user_id}")
+@router.get("/users/{user_id}/")
 async def get_user(
         user_id: str,
         user_data: schemas.User = Depends(deps.CurrentUser())
@@ -76,7 +76,7 @@ async def get_user(
     return user
 
 
-@router.get("/service-token-test")
+@router.get("/service-token-test/")
 async def test() -> Dict:
     # TODO: remove endpoint
     kc = keycloak.get_service_client()
@@ -84,7 +84,7 @@ async def test() -> Dict:
     return {'token': token}
 
 
-@router.get("/verify_staff")
+@router.get("/verify_staff/")
 async def verify_staff(
         user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
 ) -> schemas.User:

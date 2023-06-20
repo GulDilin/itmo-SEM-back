@@ -7,10 +7,9 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy import and_, delete, or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import Query, joinedload, defaultload
+from sqlalchemy.orm import Query, joinedload
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import ColumnElement
-from app.log import logger
 
 from app import schemas
 from app.core import error
@@ -86,11 +85,11 @@ class BaseService:
         load_props: List[str]
     ) -> Query:
         attr = getattr(self.entity, load_props[0])  # type is sqlalchemy.orm.attributes.InstrumentedAttribute
-        load = defaultload(attr)
+        load = joinedload(attr)
         parent_entity = attr.property.entity.entity
         for field in load_props[1:]:
             attr = getattr(parent_entity, field)
-            load = load.defaultload(attr)
+            load = load.joinedload(attr)
             parent_entity = attr.property.entity.entity
         return q.options(load)
 

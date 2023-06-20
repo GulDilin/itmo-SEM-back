@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 
@@ -6,6 +8,7 @@ from app.api import deps, util
 from app.db import entities
 
 router = APIRouter()
+router1 = APIRouter()
 
 
 @router.post('/{order_type_id}/order/', response_model=schemas.Order)
@@ -22,25 +25,31 @@ async def create_order(
 
 
 @router.get('/{order_type_id}/order/', response_model=schemas.PaginatedResponse)
+@router1.get('/', response_model=schemas.PaginatedResponse)
 async def get_orders(
         paginator: schemas.PaginationData = Depends(),
-        order_type: entities.OrderType = Depends(deps.get_path_order_type),
+        order_type: Optional[entities.OrderType] = Depends(deps.get_path_order_type),
         order_service: services.OrderService = Depends(deps.get_order_service),
+        sorting_list: schemas.SortingList = Depends(deps.get_sorting_list),
+        filter_data: dict = Depends(deps.get_order_filter),
         user_data: schemas.User = Depends(deps.get_user_data)
 ) -> schemas.PaginatedResponse:
+    if order_type:
+        filter_data['order_type_id'] = str(order_type.id)
     return await util.get_paginated_response(
         await order_service.read_many_paginated(
             wrapper_class=schemas.Order,
             offset=paginator.offset,
             limit=paginator.limit,
-            order_type_id=str(order_type.id),
-            load_props=['params.order_type_param'],
+            sorting_list=sorting_list,
+            **filter_data,
         ),
         paginator
     )
 
 
-@router.get('/{order_type_id}/order/{order_id}', response_model=schemas.Order)
+@router.get('/{order_type_id}/order/{order_id}/', response_model=schemas.Order)
+@router1.get('/', response_model=schemas.Order)
 async def get_order(
         order: entities.Order = Depends(deps.get_path_order),
         user_data: schemas.User = Depends(deps.get_user_data)
@@ -48,7 +57,7 @@ async def get_order(
     return schemas.Order(**jsonable_encoder(order))
 
 
-@router.put('/{order_type_id}/order/{order_id}', response_model=schemas.Order)
+@router.put('/{order_type_id}/order/{order_id}/', response_model=schemas.Order)
 async def update_order(
         order_update_data: schemas.OrderUpdate,
         order: entities.Order = Depends(deps.get_path_order),
@@ -73,7 +82,7 @@ async def update_order(
     return schemas.Order(**jsonable_encoder(updated))
 
 
-@router.delete('/{order_type_id}/order/{order_id}')
+@router.delete('/{order_type_id}/order/{order_id}/')
 async def delete_order(
         order: entities.Order = Depends(deps.get_path_order),
         order_type: entities.OrderType = Depends(deps.get_path_order_type),

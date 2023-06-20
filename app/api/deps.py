@@ -1,11 +1,13 @@
 from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 from uuid import UUID
 
-from fastapi import Depends, Path
+from fastapi import Depends, Path, Query
 from fastapi.security import HTTPAuthorizationCredentials
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import schemas, services
+from app.api import util
 from app.core import auth
 from app.db import entities
 from app.db.session import get_session
@@ -19,8 +21,10 @@ async def get_order_type_service(
 
 async def get_path_order_type(
         order_type_service: services.OrderTypeService = Depends(get_order_type_service),
-        order_type_id: str = Path(None, title='Order Type ID'),
-) -> entities.OrderType:
+        order_type_id: str = Query(None, title='Order Type ID'),
+) -> Optional[entities.OrderType]:
+    if order_type_id is None:
+        return None
     try:
         UUID(str(order_type_id))
         return await order_type_service.read_one(id=str(order_type_id))
@@ -39,11 +43,34 @@ async def get_update_status_service(
 
 
 async def get_path_order(
-        order_type: entities.OrderType = Depends(get_path_order_type),
+        order_type: Optional[entities.OrderType] = Depends(get_path_order_type),
         order_service: services.OrderService = Depends(get_order_service),
         order_id: UUID = Path(None, title='Order ID'),
 ) -> entities.Order:
-    return await order_service.read_one(id=str(order_id), order_type_id=str(order_type.id))
+    filter_data = {}
+    if order_type:
+        filter_data['order_type_id'] = str(order_type.id)
+    return await order_service.read_one(
+        id=str(order_id),
+        load_props=['order_type.params'],
+        **filter_data,
+    )
+
+
+def get_order_filter(
+    id: Optional[List[str]] = Query(None),
+    parent_order_id: Optional[List[str]] = Query(None),
+    user_customer: Optional[List[str]] = Query(None),
+    user_implementer: Optional[List[str]] = Query(None),
+    status: Optional[List[str]] = Query(None),
+) -> dict:
+    return schemas.OrderFilter(
+        id=id,
+        parent_order_id=parent_order_id,
+        user_customer=user_customer,
+        user_implementer=user_implementer,
+        status=status,
+    ).dict(exclude_none=True)
 
 
 async def get_order_type_param_service(
@@ -133,3 +160,19 @@ class CurrentUser:
         if self.required_roles:
             user.check_all_roles(self.required_roles)
         return user
+
+
+def get_sorting_list(sort: Optional[str] = None) -> Optional[schemas.SortingList]:
+    if sort is None:
+        return schemas.SortingList(
+            sorting_list=[
+                schemas.SortingListItem(type=schemas.SortingType.DESC, field="created_at")
+            ]
+        )
+
+    class SortValueChecker(BaseModel):
+        sort: Optional[str] = Field(None, max_length=200)
+
+    SortValueChecker(sort=sort)
+    sorting_list = util.parse_sorting(sort)
+    return sorting_list

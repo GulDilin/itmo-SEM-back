@@ -2,8 +2,9 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
-from .. import schemas
+from .keycloak_user import User, UserRole
 from .order_param_value import OrderParamValue
+from .order_type import OrderType
 from .util import StrEnum, TimestampedWithId
 
 
@@ -24,17 +25,17 @@ class OrderTypeName(StrEnum):
 
 
 order_type_requisites: Dict[str, List[str]] = {
-    OrderTypeName.BATH_ORDER: [schemas.UserRole.STAFF_CUSTOMER_MANAGER, schemas.UserRole.STAFF_ORDER_MANAGER, ],
-    OrderTypeName.TIMBER_ORDER: [schemas.UserRole.STAFF_ORDER_MANAGER, schemas.UserRole.STAFF_AXEMAN],
-    OrderTypeName.TIMBER_DEFECT_ORDER: [schemas.UserRole.STAFF_ORDER_MANAGER],
+    OrderTypeName.BATH_ORDER: [UserRole.STAFF_CUSTOMER_MANAGER, UserRole.STAFF_ORDER_MANAGER, ],
+    OrderTypeName.TIMBER_ORDER: [UserRole.STAFF_ORDER_MANAGER, UserRole.STAFF_AXEMAN],
+    OrderTypeName.TIMBER_DEFECT_ORDER: [UserRole.STAFF_ORDER_MANAGER],
 }
 
 order_status_requisites: Dict[str, List[str]] = {
-    OrderStatus.NEW: [schemas.UserRole.STAFF_CUSTOMER_MANAGER],
-    OrderStatus.READY: [schemas.UserRole.STAFF_CUSTOMER_MANAGER],
-    OrderStatus.IN_PROGRESS: [schemas.UserRole.STAFF_AXEMAN],
-    OrderStatus.DONE: [schemas.UserRole.STAFF_AXEMAN],
-    OrderStatus.ACCEPTED: [schemas.UserRole.STAFF_ORDER_MANAGER],
+    OrderStatus.NEW: [UserRole.STAFF_CUSTOMER_MANAGER],
+    OrderStatus.READY: [UserRole.STAFF_CUSTOMER_MANAGER],
+    OrderStatus.IN_PROGRESS: [UserRole.STAFF_AXEMAN],
+    OrderStatus.DONE: [UserRole.STAFF_AXEMAN],
+    OrderStatus.ACCEPTED: [UserRole.STAFF_ORDER_MANAGER],
 }
 
 allowed_status_transitions: Dict[str, List[str]] = {
@@ -43,17 +44,21 @@ allowed_status_transitions: Dict[str, List[str]] = {
     OrderStatus.IN_PROGRESS: [OrderStatus.DONE],
     OrderStatus.DONE: [OrderStatus.ACCEPTED, OrderStatus.READY],
     OrderStatus.ACCEPTED: [],
-    OrderStatus.TO_REMOVE: [OrderStatus.NEW,
-                            OrderStatus.READY,
-                            OrderStatus.IN_PROGRESS,
-                            OrderStatus.DONE,
-                            OrderStatus.ACCEPTED,
-                            OrderStatus.REMOVED],
-    OrderStatus.REMOVED: [OrderStatus.NEW,
-                          OrderStatus.READY,
-                          OrderStatus.IN_PROGRESS,
-                          OrderStatus.DONE,
-                          OrderStatus.ACCEPTED],
+    OrderStatus.TO_REMOVE: [
+        OrderStatus.NEW,
+        OrderStatus.READY,
+        OrderStatus.IN_PROGRESS,
+        OrderStatus.DONE,
+        OrderStatus.ACCEPTED,
+        OrderStatus.REMOVED,
+    ],
+    OrderStatus.REMOVED: [
+        OrderStatus.NEW,
+        OrderStatus.READY,
+        OrderStatus.IN_PROGRESS,
+        OrderStatus.DONE,
+        OrderStatus.ACCEPTED
+    ],
 }
 
 
@@ -91,13 +96,22 @@ class Order(TimestampedWithId):
     parent_order_id: Optional[str] = None
     params: List[OrderParamValue]
     history: List[OrderStatusUpdate]
+    order_type: Optional[OrderType]
 
 
-def raise_order_type(user: schemas.User, order_type: str) -> None:
+class OrderFilter(BaseModel):
+    id: Optional[List[str]]
+    parent_order_id: Optional[List[str]]
+    user_customer: Optional[List[str]]
+    user_implementer: Optional[List[str]]
+    status: Optional[List[str]]
+
+
+def raise_order_type(user: User, order_type: str) -> None:
     user.check_one_role(order_type_requisites[order_type])
 
 
-def raise_order_status_update(user: schemas.User, old_status: OrderStatus, new_status: OrderStatus) -> None:
+def raise_order_status_update(user: User, old_status: OrderStatus, new_status: OrderStatus) -> None:
     user.check_one_role(order_status_requisites[new_status])
     if new_status not in allowed_status_transitions[old_status]:
         raise ValueError(f'Could not transition from {old_status} to {new_status}')

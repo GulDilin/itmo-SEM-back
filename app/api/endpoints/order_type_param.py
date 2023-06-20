@@ -25,6 +25,7 @@ async def get_orders(
         paginator: schemas.PaginationData = Depends(),
         order_type: entities.OrderType = Depends(deps.get_path_order_type),
         order_type_param_service: services.OrderTypeParamService = Depends(deps.get_order_type_param_service),
+        sorting_list: schemas.SortingList = Depends(deps.get_sorting_list),
         user_data: schemas.User = Depends(deps.get_user_data),
 ) -> schemas.PaginatedResponse:
     return await util.get_paginated_response(
@@ -32,6 +33,7 @@ async def get_orders(
             wrapper_class=schemas.OrderTypeParam,
             order_type_id=order_type.id,
             offset=paginator.offset,
+            sorting_list=sorting_list,
             limit=paginator.limit,
         ),
         paginator
