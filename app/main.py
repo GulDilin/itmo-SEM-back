@@ -1,3 +1,4 @@
+import asyncio
 import traceback
 from typing import Dict, Optional
 
@@ -91,3 +92,21 @@ async def not_found_exception_handler(req: Request, exc: Exception) -> JSONRespo
 @app.exception_handler(error.ActionForbidden)
 async def forbidden_exception_handler(req: Request, exc: Exception) -> JSONResponse:  # noqa
     return handle_default_error(exc, status.HTTP_403_FORBIDDEN)
+
+
+async def test_job() -> None:
+    logger.info('TEST JOB RUN')
+
+
+@app.on_event("startup")
+async def startup_event() -> None:
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+    from apscheduler.triggers.cron import CronTrigger
+
+    scheduler = AsyncIOScheduler(event_loop=asyncio.get_running_loop())
+    for job, interval in [
+        (test_job, "* * * * *"),
+    ]:
+        await job()
+        scheduler.add_job(job, CronTrigger.from_crontab(interval))
+    scheduler.start()
