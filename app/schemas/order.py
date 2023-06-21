@@ -153,7 +153,7 @@ def raise_accepted_order_update(
         return
     logger.info(child_orders)
     for child_order in child_orders:
-        if child_order.status != OrderStatus.ACCEPTED:
+        if child_order.status not in [OrderStatus.ACCEPTED, OrderStatus.TO_REMOVE, OrderStatus.REMOVED]:
             raise ValueError('Все дочерние заказы должны быть завершены')
 
 
