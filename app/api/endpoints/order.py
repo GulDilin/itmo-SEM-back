@@ -17,13 +17,9 @@ async def create_order(
         order: schemas.OrderCreate,
         order_type: entities.OrderType = Depends(deps.get_path_order_type),
         order_service: services.OrderService = Depends(deps.get_order_service),
-        user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
+        user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF_CUSTOMER_MANAGER]))
 ) -> schemas.Order:
-    schemas.raise_order_type(
-        user=user,
-        order_type=str(order_type.name),
-        status=schemas.OrderStatus.NEW,
-    )
+    schemas.raise_order_type(user=user, order_type=str(order_type.name))
     await schemas.raise_user_customer_data(order)
     await schemas.raise_user_implementer_data(order)
     return schemas.Order(**jsonable_encoder(
@@ -80,15 +76,11 @@ async def update_order(
         status_service: services.OrderStatusUpdateService = Depends(deps.get_update_status_service),
         user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
 ) -> schemas.Order:
-    schemas.raise_order_type(user, str(order_type.name), order_update_data.status)
+    schemas.raise_order_type(user, str(order_type.name))
     await schemas.raise_user_customer_update_data(order_update_data)
     await schemas.raise_user_implementer_update_data(order_update_data)
     if order_update_data.status is not None:
-        schemas.raise_order_type(
-            user=user,
-            order_type=str(order_type.name),
-            status=order_update_data.status,
-        )
+        schemas.raise_order_type(user=user, order_type=str(order_type.name))
         schemas.raise_order_status_update(
             user=user,
             old_status=schemas.OrderStatus(order.status),
@@ -124,7 +116,7 @@ async def delete_order(
         status_service: services.OrderStatusUpdateService = Depends(deps.get_update_status_service),
         user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
 ) -> schemas.Order:
-    schemas.raise_order_type(user, str(order_type.name), schemas.OrderStatus.TO_REMOVE)
+    schemas.raise_order_type(user, str(order_type.name))
 
     schemas.raise_order_status_update(
         user=user,

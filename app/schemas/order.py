@@ -35,11 +35,11 @@ order_type_requisites: Dict[str, List[str]] = {
 
 order_status_requisites: Dict[str, List[str]] = {
     OrderStatus.NEW: [UserRole.STAFF_CUSTOMER_MANAGER],
-    OrderStatus.READY: [UserRole.STAFF_CUSTOMER_MANAGER],
+    OrderStatus.READY: [UserRole.STAFF_ORDER_MANAGER, UserRole.STAFF_CUSTOMER_MANAGER],
     OrderStatus.IN_PROGRESS: [UserRole.STAFF_AXEMAN],
     OrderStatus.DONE: [UserRole.STAFF_AXEMAN],
     OrderStatus.ACCEPTED: [UserRole.STAFF_ORDER_MANAGER],
-    OrderStatus.TO_REMOVE: [UserRole.STAFF_ORDER_MANAGER],
+    OrderStatus.TO_REMOVE: [UserRole.STAFF_ORDER_MANAGER, UserRole.STAFF_CUSTOMER_MANAGER],
     OrderStatus.REMOVED: [],
 }
 
@@ -121,17 +121,12 @@ class OrderDepType(StrEnum):
     DEFECT = 'DEFECT'
 
 
-def raise_order_type(user: User, order_type: str, status: str) -> None:
-    if status == OrderStatus.REMOVED:
-        user.check_one_role([UserRole.ADMIN])
-    if status in [OrderStatus.READY, OrderStatus.ACCEPTED, OrderStatus.TO_REMOVE, OrderStatus.NEW]:
-        user.check_one_role([UserRole.STAFF_CUSTOMER_MANAGER, UserRole.STAFF_ORDER_MANAGER])
-    if status in [OrderStatus.IN_PROGRESS, OrderStatus.DONE]:
-        user.check_one_role(order_type_requisites[order_type])
+def raise_order_type(user: User, order_type: str) -> None:
+    user.check_one_role(order_type_requisites[order_type])
 
 
 def raise_order_status_update(user: User, old_status: OrderStatus, new_status: OrderStatus) -> None:
-    # user.check_one_role(order_status_requisites[new_status])
+    user.check_one_role(order_status_requisites[new_status])
     if new_status not in allowed_status_transitions[old_status]:
         raise ValueError(f'Could not transition from {old_status} to {new_status}')
 
