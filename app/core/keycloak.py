@@ -1,10 +1,11 @@
+import time
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 import httpx
 
 from app import schemas
-from app.core import error, message
+from app.core import auth, error, message
 from app.settings import settings
 
 # REST API DOCS: https://www.keycloak.org/docs-api/20.0.5/rest-api/index.html
@@ -23,6 +24,8 @@ class KeycloakClient:
     realm: str
     client_id: str
     client_secret: Optional[str] = None
+    exp_threshold: int = 50
+    _access_token: Optional[str] = None
 
     @staticmethod
     def get_token_auth_headers(token: str) -> Dict:
@@ -35,7 +38,7 @@ class KeycloakClient:
         return settings.KEYCLOAK_OPENID_CONFIG[key]
 
     async def get_auth_config(self, client_id: str, token: Optional[str] = None) -> Dict:
-        token = token if token else await self.get_token_by_secret()
+        token = token if token else await self.get_active_access_token()
         client_k = await self.get_client(client_id, token=token)
         headers = self.get_token_auth_headers(token)
         url = schemas.KeycloakEndpoint.GET_INSTALLATION_CONFIG.value.format(
@@ -47,6 +50,18 @@ class KeycloakClient:
             response = await client.get(url, headers=headers)
             response.raise_for_status()
             return response.json()
+
+    async def set_access_token_and_return(self) -> str:
+        self._access_token = await self.get_token_by_secret()
+        return self._access_token
+
+    async def get_active_access_token(self) -> str:
+        if not self._access_token:
+            return await self.set_access_token_and_return()
+        token_data = auth.decode_auth_token(self._access_token)
+        if (int(token_data.get('exp', 0)) - time.time()) < self.exp_threshold:
+            return await self.set_access_token_and_return()
+        return self._access_token
 
     async def get_token_by_secret(self) -> str:
         if not self.client_secret:
@@ -67,7 +82,7 @@ class KeycloakClient:
             return response.json().get('access_token')
 
     async def get_client(self, client_id: str, token: Optional[str] = None) -> Dict:
-        token = token if token else await self.get_token_by_secret()
+        token = token if token else await self.get_active_access_token()
         headers = self.get_token_auth_headers(token)
         url = schemas.KeycloakEndpoint.GET_CLIENTS.value.format(
             url=self.url,
@@ -83,7 +98,7 @@ class KeycloakClient:
             return response.json()[0]
 
     async def get_clients(self, token: Optional[str] = None) -> List:
-        token = token if token else await self.get_token_by_secret()
+        token = token if token else await self.get_active_access_token()
         headers = self.get_token_auth_headers(token)
         url = schemas.KeycloakEndpoint.GET_CLIENTS.value.format(
             url=self.url,
@@ -110,7 +125,7 @@ class KeycloakClient:
             raise error.Unauthorized
 
     async def get_roles(self, token: Optional[str] = None) -> List:
-        token = token if token else await self.get_token_by_secret()
+        token = token if token else await self.get_active_access_token()
         headers = self.get_token_auth_headers(token)
         client_id = (
             await self.get_client(
@@ -130,7 +145,7 @@ class KeycloakClient:
             return data
 
     async def get_role_with_users(self, role_name: str, token: Optional[str] = None) -> List:
-        token = token if token else await self.get_token_by_secret()
+        token = token if token else await self.get_active_access_token()
         headers = self.get_token_auth_headers(token)
         client_id = (
             await self.get_client(
@@ -151,7 +166,7 @@ class KeycloakClient:
             return data
 
     async def get_users(self, token: Optional[str] = None) -> List:
-        token = token if token else await self.get_token_by_secret()
+        token = token if token else await self.get_active_access_token()
         headers = self.get_token_auth_headers(token)
         url = schemas.KeycloakEndpoint.GET_USERS.value.format(
             url=self.url,
@@ -166,7 +181,7 @@ class KeycloakClient:
             return data
 
     async def get_users_with_roles(self, token: Optional[str] = None) -> List:
-        token = token if token else await self.get_token_by_secret()
+        token = token if token else await self.get_active_access_token()
         headers = self.get_token_auth_headers(token)
         url = schemas.KeycloakEndpoint.GET_USERS.value.format(
             url=self.url,
@@ -190,7 +205,7 @@ class KeycloakClient:
             return data
 
     async def get_user_by_id(self, user_id: str, token: Optional[str] = None) -> Dict:
-        token = token if token else await self.get_token_by_secret()
+        token = token if token else await self.get_active_access_token()
         headers = self.get_token_auth_headers(token)
         url = schemas.KeycloakEndpoint.GET_USER.value.format(
             url=self.url,
@@ -206,7 +221,7 @@ class KeycloakClient:
             raise error.ItemNotFound(item=message.MODEL_USER)
 
     async def get_user_roles(self, user_id: str, client_id: str, token: Optional[str] = None) -> Dict:
-        token = token if token else await self.get_token_by_secret()
+        token = token if token else await self.get_active_access_token()
         headers = self.get_token_auth_headers(token)
         url = schemas.KeycloakEndpoint.GET_USER_ROLES.value.format(
             url=self.url,
