@@ -80,7 +80,7 @@ async def update_order(
         status_service: services.OrderStatusUpdateService = Depends(deps.get_update_status_service),
         user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
 ) -> schemas.Order:
-    schemas.raise_order_type(user, str(order_type.name))
+    schemas.raise_order_type(user, str(order_type.name), order_update_data.status)
     await schemas.raise_user_customer_update_data(order_update_data)
     await schemas.raise_user_implementer_update_data(order_update_data)
     if order_update_data.status is not None:

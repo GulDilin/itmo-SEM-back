@@ -1,6 +1,6 @@
 from typing import Dict
 
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends
 
 from app import schemas
 from app.api import deps
@@ -38,10 +38,10 @@ async def get_roles(
     )
 
 
-@router.get("/roles/{role_name}/users/", response_model=schemas.PaginatedResponse)
+@router.get("/users/", response_model=schemas.PaginatedResponse)
 async def get_role_with_users(
+        role_name: str,
         user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF])),
-        role_name: str = Path(None, title='Role Name')
 ) -> schemas.PaginatedResponse:
     kc = keycloak.get_service_client()
     users = await kc.get_role_with_users(role_name=role_name)
