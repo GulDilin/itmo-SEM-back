@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 from fastapi import APIRouter, Depends
 
@@ -8,20 +8,6 @@ from app.core import keycloak
 from app.settings import settings
 
 router = APIRouter()
-
-
-@router.get("/users/", response_model=schemas.PaginatedResponse)
-async def get_users(
-        user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF])),
-) -> schemas.PaginatedResponse:
-    kc = keycloak.get_service_client()
-    users = await kc.get_users_with_roles()
-    return schemas.PaginatedResponse(
-        results=users,
-        count=len(users),
-        next=None,
-        previous=None,
-    )
 
 
 @router.get("/roles/", response_model=schemas.PaginatedResponse)
@@ -40,11 +26,14 @@ async def get_roles(
 
 @router.get("/users/", response_model=schemas.PaginatedResponse)
 async def get_role_with_users(
-        role_name: str,
+        role_name: Optional[str] = None,
         user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF])),
 ) -> schemas.PaginatedResponse:
     kc = keycloak.get_service_client()
-    users = await kc.get_role_with_users(role_name=role_name)
+    if role_name is not None:
+        users = await kc.get_role_with_users(role_name=role_name)
+    else:
+        users = await kc.get_users_with_roles()
     return schemas.PaginatedResponse(
         results=users,
         count=len(users),
