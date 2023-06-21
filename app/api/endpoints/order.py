@@ -39,6 +39,8 @@ async def get_orders(
 ) -> schemas.PaginatedResponse:
     if order_type:
         filter_data['order_type_id'] = str(order_type.id)
+    if 'staff' not in user_data.roles:
+        filter_data['user_customer'] = str(user_data.user_id)
     # TODO discuss
     # if order_type.name != OrderTypeName.BATH_ORDER:
     #     user_data.check_one_role([schemas.UserRole.STAFF])
