@@ -86,12 +86,10 @@ async def update_order(
             new_status=order_update_data.status
         )
         schemas.raise_ready_order_update(new_status=order_update_data.status, order=order)
-        defect_order_type = await order_type_service.read_one(name=OrderTypeName.DEFECT_ORDER)
         schemas.raise_accepted_order_update(
             new_status=order_update_data.status,
             child_orders=await order_service.read_many(
-                parent_order_id=order.id,
-                order_type_id=defect_order_type.id
+                parent_order_id=order.id
             )
         )
         await status_service.create(

@@ -38,7 +38,7 @@ order_status_requisites: Dict[str, List[str]] = {
     OrderStatus.READY: [UserRole.STAFF_ORDER_MANAGER, UserRole.STAFF_CUSTOMER_MANAGER],
     OrderStatus.IN_PROGRESS: [UserRole.STAFF_AXEMAN, UserRole.STAFF_ORDER_MANAGER],
     OrderStatus.DONE: [UserRole.STAFF_AXEMAN, UserRole.STAFF_ORDER_MANAGER],
-    OrderStatus.ACCEPTED: [UserRole.STAFF_ORDER_MANAGER,],
+    OrderStatus.ACCEPTED: [UserRole.STAFF_ORDER_MANAGER, ],
     OrderStatus.TO_REMOVE: [UserRole.STAFF_ORDER_MANAGER, UserRole.STAFF_CUSTOMER_MANAGER],
     OrderStatus.REMOVED: [],
 }
@@ -146,8 +146,8 @@ def raise_ready_order_update(new_status: OrderStatus, order: entities.Order) -> 
 
 
 def raise_accepted_order_update(
-    new_status: OrderStatus,
-    child_orders: Sequence[entities.Order]
+        new_status: OrderStatus,
+        child_orders: Sequence[entities.Order]
 ) -> None:
     if new_status != OrderStatus.ACCEPTED:
         return
