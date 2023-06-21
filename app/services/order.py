@@ -24,6 +24,13 @@ class OrderService(BaseService):
     ) -> entities.Order:
         if order_type.name != OrderTypeName.BATH_ORDER and item.parent_order_id is None:
             raise ValueError('Заполните родительский заказ')
+
+        if item.parent_order_id is not None:
+            child_orders = await self.read_many(parent_order_id=item.parent_order_id)
+            for order in child_orders:
+                if order.order_type_id == order_type.id:
+                    raise ValueError('Заявка с таким типом уже была создана')
+
         return await self._create(item=entities.Order(
             status=schemas.OrderStatus.NEW,
             user_customer=item.user_customer,

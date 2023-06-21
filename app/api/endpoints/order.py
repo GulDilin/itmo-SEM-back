@@ -39,9 +39,6 @@ async def get_orders(
 ) -> schemas.PaginatedResponse:
     if order_type:
         filter_data['order_type_id'] = str(order_type.id)
-    # TODO discuss
-    # if order_type.name != OrderTypeName.BATH_ORDER:
-    #     user_data.check_one_role([schemas.UserRole.STAFF])
     return await util.get_paginated_response(
         await order_service.read_many_paginated(
             wrapper_class=schemas.Order,
