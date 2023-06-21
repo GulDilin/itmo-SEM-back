@@ -55,8 +55,6 @@ async def get_user(
         user_id: str,
         user_data: schemas.User = Depends(deps.CurrentUser())
 ) -> Dict:
-    if user_data.user_id != user_id:
-        user_data.check_one_role(schemas.UserRole.STAFF)
     kc = keycloak.get_service_client()
     user = await kc.get_user_by_id(user_id)
     client = await kc.get_client(client_id=settings.KEYCLOAK_CLIENT_ID_FRONT)
