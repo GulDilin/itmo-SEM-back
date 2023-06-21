@@ -154,7 +154,7 @@ def raise_accepted_order_update(
     logger.info(child_orders)
     for child_order in child_orders:
         if child_order.status != OrderStatus.ACCEPTED:
-            raise ValueError('All child orders should be accepted')
+            raise ValueError('Все дочерние заказы должны быть завершены')
 
 
 async def raise_user_customer_data(
