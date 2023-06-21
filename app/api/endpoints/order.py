@@ -6,7 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from app import schemas, services
 from app.api import deps, util
 from app.db import entities
-from app.schemas.order import OrderTypeName
+from app.schemas.order import OrderStatus, OrderTypeName
 
 router = APIRouter()
 router1 = APIRouter()
@@ -116,7 +116,22 @@ async def delete_order(
         order: entities.Order = Depends(deps.get_path_order),
         order_type: entities.OrderType = Depends(deps.get_path_order_type),
         order_service: services.OrderService = Depends(deps.get_order_service),
+        status_service: services.OrderStatusUpdateService = Depends(deps.get_update_status_service),
         user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
-) -> None:
+) -> schemas.Order:
     schemas.raise_order_type(user, str(order_type.name), schemas.OrderStatus.TO_REMOVE)
-    await order_service.delete(id=order.id)
+
+    schemas.raise_order_status_update(
+        user=user,
+        old_status=schemas.OrderStatus(order.status),
+        new_status=OrderStatus.TO_REMOVE
+    )
+    await status_service.create(
+        user=user,
+        new_order_status=OrderStatus.TO_REMOVE,
+        old_order_status=schemas.OrderStatus(order.status),
+        order_id=str(order.id))
+    updated = await order_service.update(
+        id=str(order.id),
+        **jsonable_encoder(schemas.OrderUpdate(status=OrderStatus.TO_REMOVE), exclude_none=True))
+    return schemas.Order(**jsonable_encoder(updated))

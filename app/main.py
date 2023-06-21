@@ -99,10 +99,29 @@ async def forbidden_exception_handler(req: Request, exc: Exception) -> JSONRespo
 
 
 async def test_job() -> None:
-    logger.info('TEST JOB RUN')
+    from datetime import datetime, timedelta
+
+    import pytz
+    from fastapi.encoders import jsonable_encoder
+    logger.info("Job started")
     async with wrap_session() as session:
+        timeout = timedelta(0, 60)  # one minute
         order_service = services.OrderService(session)
-        await order_service.exists(id='ananas')
+        order_status_service = services.OrderStatusUpdateService(session)
+        orders_to_remove = await order_service.read_many(status=schemas.OrderStatus.TO_REMOVE)
+        for order in orders_to_remove:
+            if order.history[-1].created_at + timeout < datetime.now(pytz.UTC):
+                await order_status_service.create(
+                    user=schemas.User(name="SYSTEM", user_id="SYSTEM", roles=[]),
+                    new_order_status=schemas.OrderStatus.REMOVED,
+                    old_order_status=schemas.OrderStatus(order.status),
+                    order_id=str(order.id))
+                await order_service.update(
+                    id=str(order.id),
+                    **jsonable_encoder(schemas.OrderUpdate(status=schemas.OrderStatus.REMOVED), exclude_none=True))
+                logger.info(f"Cleared order {order.id}")
+        await session.commit()
+    logger.info("Job ended")
 
 
 @app.on_event("startup")

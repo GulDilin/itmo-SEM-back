@@ -81,6 +81,7 @@ class Order(TimeStampedWithId):
         back_populates="order",
         uselist=True,
         lazy='joined',
+        order_by='OrderStatusUpdate.created_at'
     )
 
 
