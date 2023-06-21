@@ -29,7 +29,7 @@ class OrderTypeName(StrEnum):
 
 order_type_requisites: Dict[str, List[str]] = {
     OrderTypeName.BATH_ORDER: [UserRole.STAFF_CUSTOMER_MANAGER, UserRole.STAFF_ORDER_MANAGER, ],
-    OrderTypeName.TIMBER_ORDER: [UserRole.STAFF_ORDER_MANAGER, UserRole.STAFF_AXEMAN],
+    OrderTypeName.TIMBER_ORDER: [UserRole.STAFF_AXEMAN],
     OrderTypeName.TIMBER_DEFECT_ORDER: [UserRole.STAFF_ORDER_MANAGER],
 }
 
@@ -97,6 +97,7 @@ class Order(TimestampedWithId):
     user_implementer: str
     order_type_id: Optional[str]
     parent_order_id: Optional[str] = None
+    parent_order: Optional['Order'] = None
     params: List[OrderParamValue]
     history: List[OrderStatusUpdate]
     order_type: Optional[OrderType]
@@ -107,15 +108,28 @@ class OrderFilter(BaseModel):
     parent_order_id: Optional[List[str]]
     user_customer: Optional[List[str]]
     user_implementer: Optional[List[str]]
+    dep_type: Optional[List[str]]
     status: Optional[List[str]]
 
 
-def raise_order_type(user: User, order_type: str) -> None:
-    user.check_one_role(order_type_requisites[order_type])
+class OrderDepType(StrEnum):
+    MAIN = 'MAIN'
+    OPTIONAL = 'OPTIONAL'
+    DEPEND = 'DEPEND'
+    DEFECT = 'DEFECT'
+
+
+def raise_order_type(user: User, order_type: str, status: str) -> None:
+    if status == OrderStatus.REMOVED:
+        user.check_one_role([UserRole.ADMIN])
+    if status in [OrderStatus.READY, OrderStatus.ACCEPTED, OrderStatus.TO_REMOVE, OrderStatus.NEW]:
+        user.check_one_role([UserRole.STAFF_CUSTOMER_MANAGER, UserRole.STAFF_ORDER_MANAGER])
+    if status in [OrderStatus.IN_PROGRESS, OrderStatus.DONE]:
+        user.check_one_role(order_type_requisites[order_type])
 
 
 def raise_order_status_update(user: User, old_status: OrderStatus, new_status: OrderStatus) -> None:
-    user.check_one_role(order_status_requisites[new_status])
+    # user.check_one_role(order_status_requisites[new_status])
     if new_status not in allowed_status_transitions[old_status]:
         raise ValueError(f'Could not transition from {old_status} to {new_status}')
 
@@ -134,11 +148,13 @@ def raise_ready_order_update(new_status: OrderStatus, order: entities.Order) -> 
         raise ValueError(errors)
 
 
-def raise_accepted_order_update(new_status: OrderStatus,
-                                child_orders: Sequence[entities.Order]) -> None:
+def raise_accepted_order_update(
+    new_status: OrderStatus,
+    child_orders: Sequence[entities.Order]
+) -> None:
     if new_status != OrderStatus.ACCEPTED:
         return
     logger.info(child_orders)
     for child_order in child_orders:
         if child_order.status != OrderStatus.ACCEPTED:
-            raise ValueError('All defect orders should be accepted')
+            raise ValueError('All child orders should be accepted')

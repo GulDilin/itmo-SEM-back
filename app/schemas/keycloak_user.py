@@ -28,6 +28,7 @@ class UserRole(StrEnum):
     STAFF_ORDER_MANAGER = 'staff_order_manager'
     STAFF_CUSTOMER_MANAGER = 'staff_customer_manager'
     STAFF_AXEMAN = 'staff_axeman'
+    ADMIN = 'admin'
 
 
 class User(BaseModel):

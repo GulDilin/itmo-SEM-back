@@ -38,6 +38,7 @@ DefaultSortingFields = {'id', 'updated_at', 'created_at'}
 
 class OrderType(TimeStampedWithId):
     name = sa.Column(sa.String(100))
+    dep_type = sa.Column(sa.String(50))
     params: Mapped[List['OrderTypeParam']] = relationship(
         "OrderTypeParam",
         back_populates="order_type",
@@ -67,7 +68,7 @@ class Order(TimeStampedWithId):
     user_implementer = sa.Column(sa.String(100))
     order_type: Mapped[OrderType] = relationship('OrderType', cascade="all,delete", lazy='joined')
     order_type_id = sa.Column(sa.String(50), sa.ForeignKey('order_type.id'), nullable=False)
-    parent_order: Mapped['Order'] = relationship('Order', cascade="all,delete")
+    parent_order: Mapped['Order'] = relationship('Order', cascade="all,delete", lazy='joined')
     parent_order_id = sa.Column(sa.String(50), sa.ForeignKey('order.id'), nullable=True)
     params: Mapped[List['OrderParamValue']] = relationship(
         "OrderParamValue",
@@ -83,7 +84,7 @@ class Order(TimeStampedWithId):
     )
 
 
-OrderSortingFields = {*DefaultSortingFields, 'status', 'order_type_id'}
+OrderSortingFields = {*DefaultSortingFields, 'status', 'order_type_id', 'dep_type'}
 
 
 class OrderParamValue(TimeStampedWithId):

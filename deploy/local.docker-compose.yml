@@ -36,7 +36,7 @@ services:
     build:
       context: ..
       args:
-        - WORKERS=1
+        - WORKERS=5
         - RELOAD=1
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-DEV}

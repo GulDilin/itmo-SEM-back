@@ -63,6 +63,7 @@ def get_order_filter(
     user_customer: Optional[List[str]] = Query(None),
     user_implementer: Optional[List[str]] = Query(None),
     status: Optional[List[str]] = Query(None),
+    dep_type: Optional[List[str]] = Query(None),
 ) -> dict:
     return schemas.OrderFilter(
         id=id,
@@ -70,6 +71,7 @@ def get_order_filter(
         user_customer=user_customer,
         user_implementer=user_implementer,
         status=status,
+        dep_type=dep_type,
     ).dict(exclude_none=True)
 
 

@@ -19,7 +19,11 @@ async def create_order(
         order_service: services.OrderService = Depends(deps.get_order_service),
         user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
 ) -> schemas.Order:
-    schemas.raise_order_type(user, str(order_type.name))
+    schemas.raise_order_type(
+        user=user,
+        order_type=str(order_type.name),
+        status=schemas.OrderStatus.NEW,
+    )
     return schemas.Order(**jsonable_encoder(
         await order_service.create(order, order_type=order_type)
     ))
@@ -74,20 +78,32 @@ async def update_order(
         status_service: services.OrderStatusUpdateService = Depends(deps.get_update_status_service),
         user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
 ) -> schemas.Order:
-    schemas.raise_order_type(user, str(order_type.name))
     if order_update_data.status is not None:
-        schemas.raise_order_status_update(user=user, old_status=schemas.OrderStatus(order.status),
-                                          new_status=order_update_data.status)
+        schemas.raise_order_type(
+            user=user,
+            order_type=str(order_type.name),
+            status=order_update_data.status,
+        )
+        schemas.raise_order_status_update(
+            user=user,
+            old_status=schemas.OrderStatus(order.status),
+            new_status=order_update_data.status
+        )
         schemas.raise_ready_order_update(new_status=order_update_data.status, order=order)
         defect_order_type = await order_type_service.read_one(name=OrderTypeName.TIMBER_DEFECT_ORDER)
         schemas.raise_accepted_order_update(
             new_status=order_update_data.status,
-            child_orders=await order_service.read_many(parent_order_id=order.id, order_type_id=defect_order_type.id))
+            child_orders=await order_service.read_many(
+                parent_order_id=order.id,
+                order_type_id=defect_order_type.id
+            )
+        )
         await status_service.create(
             user=user,
             new_order_status=order_update_data.status,
             old_order_status=schemas.OrderStatus(order.status),
-            order_id=str(order.id))
+            order_id=str(order.id)
+        )
     updated = await order_service.update(
         id=str(order.id),
         **jsonable_encoder(order_update_data, exclude_none=True)
@@ -102,5 +118,5 @@ async def delete_order(
         order_service: services.OrderService = Depends(deps.get_order_service),
         user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
 ) -> None:
-    schemas.raise_order_type(user, str(order_type.name))
+    schemas.raise_order_type(user, str(order_type.name), schemas.OrderStatus.TO_REMOVE)
     await order_service.delete(id=order.id)
