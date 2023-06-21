@@ -160,3 +160,39 @@ def raise_accepted_order_update(
     for child_order in child_orders:
         if child_order.status != OrderStatus.ACCEPTED:
             raise ValueError('All child orders should be accepted')
+
+
+async def raise_user_customer_data(
+        order_create_data: OrderCreate,
+) -> None:
+    from ..core import keycloak
+    kc = keycloak.get_service_client()
+    await kc.get_user_by_id(order_create_data.user_customer)
+
+
+async def raise_user_implementer_data(
+        order_create_data: OrderCreate,
+) -> None:
+    from ..core import keycloak
+    kc = keycloak.get_service_client()
+    await kc.get_user_by_id(order_create_data.user_implementer)
+
+
+async def raise_user_customer_update_data(
+        order_update_data: OrderUpdate,
+) -> None:
+    if order_update_data.user_customer is None:
+        return
+    from ..core import keycloak
+    kc = keycloak.get_service_client()
+    await kc.get_user_by_id(order_update_data.user_customer)
+
+
+async def raise_user_implementer_update_data(
+        order_update_data: OrderUpdate,
+) -> None:
+    if order_update_data.user_implementer is None:
+        return
+    from ..core import keycloak
+    kc = keycloak.get_service_client()
+    await kc.get_user_by_id(order_update_data.user_implementer)

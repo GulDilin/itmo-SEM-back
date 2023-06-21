@@ -24,6 +24,8 @@ async def create_order(
         order_type=str(order_type.name),
         status=schemas.OrderStatus.NEW,
     )
+    await schemas.raise_user_customer_data(order)
+    await schemas.raise_user_implementer_data(order)
     return schemas.Order(**jsonable_encoder(
         await order_service.create(order, order_type=order_type)
     ))
@@ -78,6 +80,9 @@ async def update_order(
         status_service: services.OrderStatusUpdateService = Depends(deps.get_update_status_service),
         user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
 ) -> schemas.Order:
+    schemas.raise_order_type(user, str(order_type.name))
+    await schemas.raise_user_customer_update_data(order_update_data)
+    await schemas.raise_user_implementer_update_data(order_update_data)
     if order_update_data.status is not None:
         schemas.raise_order_type(
             user=user,
