@@ -36,9 +36,9 @@ order_type_requisites: Dict[str, List[str]] = {
 order_status_requisites: Dict[str, List[str]] = {
     OrderStatus.NEW: [UserRole.STAFF_CUSTOMER_MANAGER],
     OrderStatus.READY: [UserRole.STAFF_ORDER_MANAGER, UserRole.STAFF_CUSTOMER_MANAGER],
-    OrderStatus.IN_PROGRESS: [UserRole.STAFF_AXEMAN],
-    OrderStatus.DONE: [UserRole.STAFF_AXEMAN],
-    OrderStatus.ACCEPTED: [UserRole.STAFF_ORDER_MANAGER],
+    OrderStatus.IN_PROGRESS: [UserRole.STAFF_AXEMAN, UserRole.STAFF_ORDER_MANAGER],
+    OrderStatus.DONE: [UserRole.STAFF_AXEMAN, UserRole.STAFF_ORDER_MANAGER],
+    OrderStatus.ACCEPTED: [UserRole.STAFF_ORDER_MANAGER,],
     OrderStatus.TO_REMOVE: [UserRole.STAFF_ORDER_MANAGER, UserRole.STAFF_CUSTOMER_MANAGER],
     OrderStatus.REMOVED: [],
 }
