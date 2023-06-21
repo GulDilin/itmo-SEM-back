@@ -24,13 +24,13 @@ class OrderStatus(StrEnum):
 class OrderTypeName(StrEnum):
     BATH_ORDER = 'Заказ на баню'
     TIMBER_ORDER = 'Заявка на сруб'
-    TIMBER_DEFECT_ORDER = 'Заявка на брак сруба'
+    DEFECT_ORDER = 'Заявка на брак'
 
 
 order_type_requisites: Dict[str, List[str]] = {
     OrderTypeName.BATH_ORDER: [UserRole.STAFF_CUSTOMER_MANAGER, UserRole.STAFF_ORDER_MANAGER, ],
     OrderTypeName.TIMBER_ORDER: [UserRole.STAFF_AXEMAN],
-    OrderTypeName.TIMBER_DEFECT_ORDER: [UserRole.STAFF_ORDER_MANAGER],
+    OrderTypeName.DEFECT_ORDER: [UserRole.STAFF_ORDER_MANAGER],
 }
 
 order_status_requisites: Dict[str, List[str]] = {
