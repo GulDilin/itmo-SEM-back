@@ -35,6 +35,7 @@ async def version() -> schemas.Version:
 
 
 if settings.BACKEND_CORS_ORIGINS:
+    logger.info(f'{settings.BACKEND_CORS_ORIGINS=}')
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.BACKEND_CORS_ORIGINS.split(","),

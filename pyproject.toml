@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "app"}]
 
 [tool.poetry.dependencies]
-python = "~3.8.1"
+python = "^3.8.1"
 fastapi = "0.92.0"
 SQLAlchemy = {extras = ["mypy"], version = "2.0.12"}
 alembic = "1.9.4"

@@ -79,7 +79,7 @@ services:
     volumes:
       - ../keycloak/import:/opt/keycloak/data/import
       - ../keycloak/themes:/opt/keycloak/themes
-      - ../.keycloak:/opt/keycloak/data/h2
+      # - ../.keycloak:/opt/keycloak/data/h2
     command:
       - "start-dev"
       - "--import-realm"
