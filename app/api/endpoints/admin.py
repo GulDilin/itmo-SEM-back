@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.get("/roles/", response_model=schemas.PaginatedResponse)
 async def get_roles(
-        user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF])),
+    user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF])),
 ) -> schemas.PaginatedResponse:
     kc = keycloak.get_service_client()
     roles = await kc.get_roles()
@@ -26,8 +26,8 @@ async def get_roles(
 
 @router.get("/users/", response_model=schemas.PaginatedResponse)
 async def get_role_with_users(
-        role_name: Optional[str] = None,
-        user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF])),
+    role_name: Optional[str] = None,
+    user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF])),
 ) -> schemas.PaginatedResponse:
     kc = keycloak.get_service_client()
     if role_name is not None:
@@ -46,20 +46,19 @@ async def get_role_with_users(
 async def get_auth_config() -> Dict:
     kc = keycloak.get_service_client()
     config = await kc.get_auth_config(client_id=settings.KEYCLOAK_CLIENT_ID_FRONT)
-    config['auth-server-url'] = settings.KEYCLOAK_URL_EXTERNAL
+    config["auth-server-url"] = settings.KEYCLOAK_URL_EXTERNAL
     return config
 
 
 @router.get("/users/{user_id}/")
 async def get_user(
-        user_id: str,
-        user_data: schemas.User = Depends(deps.CurrentUser())
+    user_id: str, user_data: schemas.User = Depends(deps.CurrentUser())
 ) -> Dict:
     kc = keycloak.get_service_client()
     user = await kc.get_user_by_id(user_id)
     client = await kc.get_client(client_id=settings.KEYCLOAK_CLIENT_ID_FRONT)
-    roles = await kc.get_user_roles(user_id=user_id, client_id=client['id'])
-    user['roles'] = roles
+    roles = await kc.get_user_roles(user_id=user_id, client_id=client["id"])
+    user["roles"] = roles
     return user
 
 
@@ -68,12 +67,12 @@ async def test() -> Dict:
     # TODO: remove endpoint
     kc = keycloak.get_service_client()
     token = await kc.get_token_by_secret()
-    return {'token': token}
+    return {"token": token}
 
 
 @router.get("/verify_staff/")
 async def verify_staff(
-        user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF]))
+    user: schemas.User = Depends(deps.CurrentUser([schemas.UserRole.STAFF])),
 ) -> schemas.User:
     # TODO: remove endpoint
     user.check_one_role([schemas.UserRole.STAFF, schemas.UserRole.USER])

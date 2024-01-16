@@ -20,11 +20,11 @@ QueryModifier = Callable[[Query], Query]
 
 class BaseService:
     def __init__(
-            self,
-            db_session: AsyncSession,
-            entity: Type,
-            entity_name: str,
-            sorting_fields: Optional[Set[str]] = None,
+        self,
+        db_session: AsyncSession,
+        entity: Type,
+        entity_name: str,
+        sorting_fields: Optional[Set[str]] = None,
     ):
         self.db_session = db_session
         self.entity = entity
@@ -38,13 +38,17 @@ class BaseService:
             return getattr(self.entity, key).in_(value)
         return getattr(self.entity, key) == value
 
-    def _set_filter(self, q: Query, filtering: dict, filtering_policy: str = 'and') -> Query:
-        predicate = or_ if filtering_policy == 'or' else and_
-        return q.filter(predicate(*(self._set_filter_chunk(k, v) for k, v in filtering.items())))
+    def _set_filter(
+        self, q: Query, filtering: dict, filtering_policy: str = "and"
+    ) -> Query:
+        predicate = or_ if filtering_policy == "or" else and_
+        return q.filter(
+            predicate(*(self._set_filter_chunk(k, v) for k, v in filtering.items()))
+        )
 
     def _parse_sorting(
-            self,
-            sorting: Optional[schemas.SortingList] = None,
+        self,
+        sorting: Optional[schemas.SortingList] = None,
     ) -> Optional[List[ColumnElement]]:
         """
         Convert sorting list to list of column operators
@@ -54,9 +58,15 @@ class BaseService:
         """
         if sorting is None:
             return None
-        error_fields = {it.field for it in sorting.sorting_list if it.field not in self.sorting_fields}
+        error_fields = {
+            it.field
+            for it in sorting.sorting_list
+            if it.field not in self.sorting_fields
+        }
         if len(error_fields) > 0:
-            raise error.IncorrectSorting(fields=error_fields, available=self.sorting_fields)
+            raise error.IncorrectSorting(
+                fields=error_fields, available=self.sorting_fields
+            )
         order_by = [
             getattr(self.entity, it.field).desc()
             if it.type == schemas.SortingType.DESC
@@ -67,8 +77,7 @@ class BaseService:
 
     @staticmethod
     def _set_order_by(
-            query: Query,
-            order_by: Optional[List[ColumnElement]] = None
+        query: Query, order_by: Optional[List[ColumnElement]] = None
     ) -> Query:
         """
         Define query ORDER BY part
@@ -79,12 +88,10 @@ class BaseService:
         """
         return query.order_by(*order_by) if order_by else query
 
-    def _set_joinedload_nested(
-        self,
-        q: Query,
-        load_props: List[str]
-    ) -> Query:
-        attr = getattr(self.entity, load_props[0])  # type is sqlalchemy.orm.attributes.InstrumentedAttribute
+    def _set_joinedload_nested(self, q: Query, load_props: List[str]) -> Query:
+        attr = getattr(
+            self.entity, load_props[0]
+        )  # type is sqlalchemy.orm.attributes.InstrumentedAttribute
         load = joinedload(attr)
         parent_entity = attr.property.entity.entity
         for field in load_props[1:]:
@@ -94,9 +101,7 @@ class BaseService:
         return q.options(load)
 
     def _set_joinedload(
-        self,
-        q: Query,
-        load_props: Optional[Iterable[str]] = None
+        self, q: Query, load_props: Optional[Iterable[str]] = None
     ) -> Query:
         """
         Define fields that will be loaded with joinedload (for inner entity fields)
@@ -107,7 +112,7 @@ class BaseService:
         """
         if load_props is not None:
             for field in load_props:
-                load_props = [it for it in field.split('.') if it]
+                load_props = [it for it in field.split(".") if it]
                 q = self._set_joinedload_nested(q, load_props)
         return q
 
@@ -131,8 +136,8 @@ class BaseService:
 
     @staticmethod
     def _set_modifiers(
-            q: Query,
-            modifiers: Optional[Iterable[QueryModifier]] = None,
+        q: Query,
+        modifiers: Optional[Iterable[QueryModifier]] = None,
     ) -> Query:
         """
         Define query modifiers (functions that get query as arg and return modified query)
@@ -144,16 +149,16 @@ class BaseService:
         return reduce(lambda acc, m: m(acc), modifiers or [], q)
 
     def _setup_query(
-            self,
-            operator: Callable = select,
-            selectable: Any = None,
-            offset: Optional[int] = None,
-            limit: Optional[int] = None,
-            load_props: Optional[List[str]] = None,
-            filtering_policy: str = 'and',
-            modifiers: Optional[Iterable[QueryModifier]] = None,
-            sorting_list: Optional[schemas.SortingList] = None,
-            **kwargs: Any
+        self,
+        operator: Callable = select,
+        selectable: Any = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+        load_props: Optional[List[str]] = None,
+        filtering_policy: str = "and",
+        modifiers: Optional[Iterable[QueryModifier]] = None,
+        sorting_list: Optional[schemas.SortingList] = None,
+        **kwargs: Any,
     ) -> Query:
         q = operator(selectable if selectable is not None else self.entity)
         q = self._set_filter(q=q, filtering=kwargs, filtering_policy=filtering_policy)
@@ -169,9 +174,9 @@ class BaseService:
         return q
 
     async def count(
-            self,
-            predicate: Optional[Any] = None,
-            **kwargs: Any,
+        self,
+        predicate: Optional[Any] = None,
+        **kwargs: Any,
     ) -> int:
         if "sorting_list" in kwargs:
             kwargs["sorting_list"] = None
@@ -181,23 +186,27 @@ class BaseService:
         return (await self.db_session.execute(q)).scalar_one() or 0
 
     async def read_many(
-        self,
-        offset: int = 0,
-        limit: Optional[int] = None,
-        **kwargs: Any
+        self, offset: int = 0, limit: Optional[int] = None, **kwargs: Any
     ) -> Sequence[Any]:
-        return (await self.db_session.execute(
-            self._setup_query(offset=offset, limit=limit, **kwargs)
-        )).scalars().unique().all()
+        return (
+            (
+                await self.db_session.execute(
+                    self._setup_query(offset=offset, limit=limit, **kwargs)
+                )
+            )
+            .scalars()
+            .unique()
+            .all()
+        )
 
     async def read_many_paginated(
-            self,
-            *args: Any,
-            wrapper_class: Type,
-            offset: int = 0,
-            limit: Optional[int] = None,
-            method: Optional[Callable] = None,
-            **kwargs: Any
+        self,
+        *args: Any,
+        wrapper_class: Type,
+        offset: int = 0,
+        limit: Optional[int] = None,
+        method: Optional[Callable] = None,
+        **kwargs: Any,
     ) -> schemas.PaginatedResponse:
         """
         Get count of items by filter
@@ -213,21 +222,25 @@ class BaseService:
         if not method:
             method = self.read_many
         count = await self.count(**kwargs) or 0
-        kwargs['limit'] = limit
-        kwargs['offset'] = offset
+        kwargs["limit"] = limit
+        kwargs["offset"] = offset
         results = [
-            wrapper_class(**jsonable_encoder(it)) for it in
-            await method(*args, **kwargs)
+            wrapper_class(**jsonable_encoder(it))
+            for it in await method(*args, **kwargs)
         ]
         return schemas.PaginatedResponse(results=results, count=count)
 
     async def read_one(self, **kwargs: Any) -> Any:
-        if item := (await self.db_session.execute(self._setup_query(**kwargs))).scalar():
+        if item := (
+            await self.db_session.execute(self._setup_query(**kwargs))
+        ).scalar():
             return item
         raise error.ItemNotFound(item=self.entity_name)
 
     async def exists(self, **kwargs: Any) -> bool:
-        return bool((await self.db_session.execute(self._setup_query(**kwargs))).scalar())
+        return bool(
+            (await self.db_session.execute(self._setup_query(**kwargs))).scalar()
+        )
 
     async def _create(self, item: Base) -> Any:
         try:

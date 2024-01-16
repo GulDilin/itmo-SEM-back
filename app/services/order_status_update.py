@@ -17,15 +17,17 @@ class OrderStatusUpdateService(BaseService):
         )
 
     async def create(
-            self,
-            user: schemas.User,
-            order_id: str,
-            new_order_status: schemas.OrderStatus,
-            old_order_status: schemas.OrderStatus,
+        self,
+        user: schemas.User,
+        order_id: str,
+        new_order_status: schemas.OrderStatus,
+        old_order_status: schemas.OrderStatus,
     ) -> entities.Order:
-        return await self._create(item=entities.OrderStatusUpdate(
-            order_id=order_id,
-            new_status=new_order_status,
-            old_status=old_order_status,
-            user=user.user_id
-        ))
+        return await self._create(
+            item=entities.OrderStatusUpdate(
+                order_id=order_id,
+                new_status=new_order_status,
+                old_status=old_order_status,
+                user=user.user_id,
+            )
+        )

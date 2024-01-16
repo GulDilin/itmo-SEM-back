@@ -54,8 +54,8 @@ class Version(BaseModel):
 
 
 class SortingType(StrEnum):
-    ASC = 'ASC'
-    DESC = 'DESC'
+    ASC = "ASC"
+    DESC = "DESC"
 
 
 class SortingListItem(BaseModel):

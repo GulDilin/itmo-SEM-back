@@ -5,9 +5,11 @@ Messages for using in code
 """
 ERRORS
 """
-ERROR_ENTITY_ENTRY_NOT_FOUND = '{entity} не найдено'
-ERROR_ENTITY_ENTRY_ALREADY_EXISTS = '{entity} уже создан.'
-ERROR_INCORRECT_DATA_FORMAT = '{format} не является одним из разрешенных форматов - {formats}'
+ERROR_ENTITY_ENTRY_NOT_FOUND = "{entity} не найдено"
+ERROR_ENTITY_ENTRY_ALREADY_EXISTS = "{entity} уже создан."
+ERROR_INCORRECT_DATA_FORMAT = (
+    "{format} не является одним из разрешенных форматов - {formats}"
+)
 ERROR_INCORRECT_SORTING = "Поле сортировки '{fields}' не поддерживается"
 ERROR_INCORRECT_SORTING_WITH_FORMAT = (
     "Формат сортировки '{fields}' не поддерживается. "
@@ -23,10 +25,10 @@ ERROR_NOT_AUTHORIZED = "Пользователь не прошел аутент�
 """
 MODELS
 """
-MODEL_ORDER_TYPE = 'Тип заказа'
-MODEL_ORDER_TYPE_PARAM = 'Параметр типа заказа'
-MODEL_ORDER = 'Заказ'
-MODEL_ORDER_PARAM_VALUE = 'Значение параметра заказа'
-MODEL_ORDER_STATUS = 'Изменение статуса заказа'
-MODEL_USER = 'Пользователь'
-MODEL_AUTH_CLIENT = 'Клиент keycloak'
+MODEL_ORDER_TYPE = "Тип заказа"
+MODEL_ORDER_TYPE_PARAM = "Параметр типа заказа"
+MODEL_ORDER = "Заказ"
+MODEL_ORDER_PARAM_VALUE = "Значение параметра заказа"
+MODEL_ORDER_STATUS = "Изменение статуса заказа"
+MODEL_USER = "Пользователь"
+MODEL_AUTH_CLIENT = "Клиент keycloak"

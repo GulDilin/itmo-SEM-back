@@ -28,11 +28,12 @@ class IncorrectSorting(Exception):
 
     def __str__(self) -> str:
         if self.with_format:
-            return message.ERROR_INCORRECT_SORTING_WITH_FORMAT.format(fields=self.fields)
+            return message.ERROR_INCORRECT_SORTING_WITH_FORMAT.format(
+                fields=self.fields
+            )
         if self.available is not None:
             return message.ERROR_INCORRECT_SORTING_WITH_AVAILABLE.format(
-                fields=list(self.fields),
-                available=list(self.available)
+                fields=list(self.fields), available=list(self.available)
             )
         return message.ERROR_INCORRECT_SORTING.format(fields=self.fields)
 
@@ -44,8 +45,8 @@ class IncorrectDataFormat(Exception):
 
     def __str__(self) -> str:
         return message.ERROR_INCORRECT_DATA_FORMAT.format(
-            format=self.format or 'Format',
-            formats=tuple(set(self.allowed_formats or [])) or ''
+            format=self.format or "Format",
+            formats=tuple(set(self.allowed_formats or [])) or "",
         )
 
 

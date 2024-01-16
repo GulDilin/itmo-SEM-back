@@ -8,7 +8,8 @@ class Base:
     id: Any
     __name__: str
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None: ...
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        ...
 
     # Generate __tablename__ automatically
     # SomeClassName -> some_class_name

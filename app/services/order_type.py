@@ -17,6 +17,8 @@ class OrderTypeService(BaseService):
         )
 
     async def create(self, item: schemas.OrderTypeCreate) -> entities.Order:
-        return await self._create(item=entities.OrderType(
-            name=item.name,
-        ))
+        return await self._create(
+            item=entities.OrderType(
+                name=item.name,
+            )
+        )

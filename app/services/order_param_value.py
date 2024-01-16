@@ -22,8 +22,10 @@ class OrderParamValueService(BaseService):
         order: entities.Order,
         order_type_param: entities.OrderTypeParam,
     ) -> entities.OrderParamValue:
-        return await self._create(item=entities.OrderParamValue(
-            value=item.value,
-            order_id=order.id,
-            order_type_param_id=order_type_param.id,
-        ))
+        return await self._create(
+            item=entities.OrderParamValue(
+                value=item.value,
+                order_id=order.id,
+                order_type_param_id=order_type_param.id,
+            )
+        )

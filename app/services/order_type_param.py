@@ -22,9 +22,11 @@ class OrderTypeParamService(BaseService):
         order_type: entities.OrderType,
     ) -> entities.OrderParamValue:
         # TODO: add unique constraint for name + order_type_id
-        return await self._create(item=entities.OrderTypeParam(
-            name=item.name,
-            value_type=item.value_type,
-            required=item.required,
-            order_type_id=order_type.id,
-        ))
+        return await self._create(
+            item=entities.OrderTypeParam(
+                name=item.name,
+                value_type=item.value_type,
+                required=item.required,
+                order_type_id=order_type.id,
+            )
+        )

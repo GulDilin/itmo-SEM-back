@@ -8,10 +8,7 @@ UrlQueryDict = Dict[str, UrlQueryParam]
 
 
 def parse_query_dict(url: URL) -> UrlQueryDict:
-    return {
-        k: (v if len(v) > 1 else v[0])
-        for k, v in parse_qs(url.query).items()
-    }
+    return {k: (v if len(v) > 1 else v[0]) for k, v in parse_qs(url.query).items()}
 
 
 def dict_to_query(d: UrlQueryDict) -> str:

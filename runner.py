@@ -4,53 +4,55 @@ import sys
 
 import uvicorn
 
-if __name__ == '__main__':
-    app_path = sys.executable if getattr(sys, 'frozen', False) else __file__
+if __name__ == "__main__":
+    app_path = sys.executable if getattr(sys, "frozen", False) else __file__
     project_dir = os.path.realpath(os.path.join(os.path.realpath(app_path), os.pardir))
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--host',
-        dest='host',
+        "--host",
+        dest="host",
         type=str,
         required=False,
-        default='0.0.0.0',
-        help='Host where server started'
+        default="0.0.0.0",
+        help="Host where server started",
     )
     parser.add_argument(
-        '-p', '--port',
-        dest='port',
+        "-p",
+        "--port",
+        dest="port",
         type=int,
         required=False,
         default=5000,
-        help='Port number'
+        help="Port number",
     )
     parser.add_argument(
-        '-ll', '--log-level',
-        dest='log_level',
+        "-ll",
+        "--log-level",
+        dest="log_level",
         type=str,
-        choices=('debug', 'info', 'warning', 'error'),
+        choices=("debug", "info", "warning", "error"),
         required=False,
-        default='warning',
-        help='Logging level (debug - maximum messages, error - only errors)'
+        default="warning",
+        help="Logging level (debug - maximum messages, error - only errors)",
     )
     parser.add_argument(
-        '--workers',
-        dest='workers',
+        "--workers",
+        dest="workers",
         type=int,
         required=False,
         default=1,
-        help='Server workers'
+        help="Server workers",
     )
     parser.add_argument(
-        '--reload',
-        dest='reload',
+        "--reload",
+        dest="reload",
         type=int,
         required=False,
         default=0,
-        help='Auto reload'
+        help="Auto reload",
     )
     args = parser.parse_args()
-    os.environ['AUTORUN_MIGRATIONS'] = '1'
+    os.environ["AUTORUN_MIGRATIONS"] = "1"
 
     # import app.settings
 
@@ -59,11 +61,11 @@ if __name__ == '__main__':
 
     alembic_cfg = config.Config()
     alembic_cfg.set_main_option("script_location", "app:migrations")
-    command.upgrade(alembic_cfg, 'head')
+    command.upgrade(alembic_cfg, "head")
 
     import app.main  # noqa, required for running with pyinstaller
 
-    print(f'Start Server on {args.host}:{args.port} LOG LEVEL: {args.log_level}')
+    print(f"Start Server on {args.host}:{args.port} LOG LEVEL: {args.log_level}")
     uvicorn.run(
         "app.main:app",
         host=args.host,

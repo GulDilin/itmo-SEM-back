@@ -8,27 +8,31 @@ from .util import StrEnum
 
 
 class KeycloakEndpoint(StrEnum):
-    GET_CLIENTS = '{url}/admin/realms/{realm}/clients'
-    GET_CLIENT = '{url}/admin/realms/{realm}/clients/{client_id}'
-    GET_ROLES = '{url}/admin/realms/{realm}/clients/{client_id}/roles'
-    GET_ROLE_USERS = '{url}/admin/realms/{realm}/clients/{client_id}/roles/{role_name}/users'
-    GET_USERS = '{url}/admin/realms/{realm}/users'
-    GET_USER = '{url}/admin/realms/{realm}/users/{user_id}'
-    GET_USER_ROLES = '{url}/admin/realms/{realm}/users/{user_id}/role-mappings/clients/{client_id}'
+    GET_CLIENTS = "{url}/admin/realms/{realm}/clients"
+    GET_CLIENT = "{url}/admin/realms/{realm}/clients/{client_id}"
+    GET_ROLES = "{url}/admin/realms/{realm}/clients/{client_id}/roles"
+    GET_ROLE_USERS = (
+        "{url}/admin/realms/{realm}/clients/{client_id}/roles/{role_name}/users"
+    )
+    GET_USERS = "{url}/admin/realms/{realm}/users"
+    GET_USER = "{url}/admin/realms/{realm}/users/{user_id}"
+    GET_USER_ROLES = (
+        "{url}/admin/realms/{realm}/users/{user_id}/role-mappings/clients/{client_id}"
+    )
     GET_INSTALLATION_CONFIG = (
-        '{url}/admin/realms/{realm}/clients/{client_id}'
-        '/installation/providers/keycloak-oidc-keycloak-json'
+        "{url}/admin/realms/{realm}/clients/{client_id}"
+        "/installation/providers/keycloak-oidc-keycloak-json"
     )
 
 
 class UserRole(StrEnum):
-    USER = 'user'
-    CUSTOMER = 'customer'
-    STAFF = 'staff'
-    STAFF_ORDER_MANAGER = 'staff_order_manager'
-    STAFF_CUSTOMER_MANAGER = 'staff_customer_manager'
-    STAFF_AXEMAN = 'staff_axeman'
-    ADMIN = 'admin'
+    USER = "user"
+    CUSTOMER = "customer"
+    STAFF = "staff"
+    STAFF_ORDER_MANAGER = "staff_order_manager"
+    STAFF_CUSTOMER_MANAGER = "staff_customer_manager"
+    STAFF_AXEMAN = "staff_axeman"
+    ADMIN = "admin"
 
 
 class User(BaseModel):
