@@ -226,7 +226,6 @@ class KeycloakClient:
     async def clear_user_roles(
         self,
         user_id: str,
-        roles: Union[Dict, List[Dict]],
         token: Union[str, None] = None
     ) -> None:
         token = token if token else await self.get_active_access_token()

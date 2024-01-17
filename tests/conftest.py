@@ -61,6 +61,11 @@ class Utils:
         )
         return await kc.get_active_access_token()
 
+    @staticmethod
+    def get_test_client_username() -> str:
+        KEYCLOAK_CLIENT_ID_TEST = os.getenv('KEYCLOAK_CLIENT_ID_TEST')
+        return f'service-account-{KEYCLOAK_CLIENT_ID_TEST}'
+
 
 @pytest.fixture
 def utils() -> Type[Utils]:
