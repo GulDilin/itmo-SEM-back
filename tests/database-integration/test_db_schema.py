@@ -1,11 +1,13 @@
 # https://fastapi.tiangolo.com/tutorial/testing/
 
 from typing import Tuple
+from uuid import uuid4
 
 import pytest
 from sqlalchemy import inspect
 
 from app import schemas, services
+from app.core import error
 from app.db import entities
 from app.db.session import async_engine, wrap_session
 
@@ -122,9 +124,10 @@ async def create_order(utils) -> Tuple[entities.Order, dict]:
     async with wrap_session() as session:
         service_v = services.OrderService(session)
         user_implementer_id = await utils.get_random_user_id_order_manager()
+        user_custormer_id = await utils.get_random_user_id_customer()
         order_type = await services.OrderTypeService(session).read_one()
         fields = {
-            "user_customer": "test",
+            "user_customer": user_custormer_id,
             "user_implementer": user_implementer_id,
             "order_type_id": str(order_type.id),
             "parent_order_id": None,
@@ -172,12 +175,14 @@ async def create_order_param(utils) -> Tuple[entities.OrderParamValue, dict]:
         (services.OrderParamValueService, create_order_param),
     ],
 )
-async def test_create_get(utils, service, create_f) -> None:
+async def test_create_get_delete(utils, service, create_f) -> None:
     created, fields = await create_f(utils)
     print(f"{created=}")
 
     async with wrap_session() as session:
         service_v = service(session)
+        exists = await service_v.exists(id=str(created.id))
+        assert exists
         got = await service_v.read_one(id=str(created.id))
         assert str(got.id) == str(created.id)
         for k, v in fields.items():
@@ -188,3 +193,95 @@ async def test_create_get(utils, service, create_f) -> None:
         items = await service_v.read_many()
         assert len(items) > 0
         assert got.id in [it.id for it in items]
+
+    async with wrap_session() as session:
+        service_v = service(session)
+        await service_v.delete(id=str(created.id))
+        await session.commit()
+
+    async with wrap_session() as session:
+        service_v = service(session)
+        exists = await service_v.exists(id=str(created.id))
+        assert not exists
+        with pytest.raises(error.ItemNotFound):
+            await service_v.read_one(id=str(created.id))
+        items = await service_v.read_many()
+        assert got.id not in [it.id for it in items]
+
+
+@pytest.mark.asyncio
+async def test_create_order_type_all_params(utils) -> None:
+    types = schemas.OrderParamValueType.values()
+    params = [
+        schemas.OrderTypeParamCreate(name=f"param{idx}", value_type=it, required=False)
+        for idx, it in enumerate(types)
+    ]
+
+    async with wrap_session() as session:
+        order_type, _ = await create_order_type(utils)
+        service = services.OrderTypeParamService(session)
+        for param in params:
+            await service.create(param, order_type)
+        await session.commit()
+
+    async with wrap_session() as session:
+        service = services.OrderTypeParamService(session)
+        for param in params:
+            exists = await service.exists(
+                order_type_id=str(order_type.id),
+                name=param.name,
+                required=param.required,
+                value_type=param.value_type,
+            )
+            assert exists
+
+    async with wrap_session() as session:
+        service = services.OrderTypeParamService(session)
+        for param in params:
+            await service.delete(
+                order_type_id=str(order_type.id),
+                name=param.name,
+                required=param.required,
+                value_type=param.value_type,
+            )
+        await session.commit()
+
+    async with wrap_session() as session:
+        service = services.OrderTypeParamService(session)
+        for param in params:
+            exists = await service.exists(
+                order_type_id=str(order_type.id),
+                name=param.name,
+                required=param.required,
+                value_type=param.value_type,
+            )
+            assert not exists
+
+
+@pytest.mark.asyncio
+async def test_create_order_params_not_exists(utils) -> None:
+    async with wrap_session() as session:
+        order_service = services.OrderService(session)
+        user_implementer_id = await utils.get_random_user_id_order_manager()
+        user_custormer_id = await utils.get_random_user_id_customer()
+        order_type = await services.OrderTypeService(session).read_one()
+        fields = {
+            "user_customer": user_custormer_id,
+            "user_implementer": user_implementer_id,
+            "order_type_id": str(order_type.id),
+            "parent_order_id": None,
+        }
+        order = await order_service.create(schemas.OrderCreate(**fields), order_type)
+
+        order_type_param_service = services.OrderTypeParamService(session)
+        order_param_service = services.OrderParamValueService(session)
+        fields = {"value": "1"}
+        with pytest.raises(error.ItemNotFound):
+            await order_param_service.create(
+                schemas.OrderParamValueCreate(**fields),
+                order,
+                await order_type_param_service.read_one(
+                    id=str(uuid4()), order_type_id=str(order_type.id)
+                ),
+            )
+            await session.commit()
