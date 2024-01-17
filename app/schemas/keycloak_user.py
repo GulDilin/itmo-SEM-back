@@ -17,7 +17,7 @@ class KeycloakEndpoint(StrEnum):
     )
     GET_USERS = "{url}/admin/realms/{realm}/users"
     GET_USER = "{url}/admin/realms/{realm}/users/{user_id}"
-    ADD_USER_ROLES = '{url}/admin/realms/{realm}/users/{user_id}/role-mappings/clients/{client_id}'
+    USER_ROLES = '{url}/admin/realms/{realm}/users/{user_id}/role-mappings/clients/{client_id}'
     CREATE_USER = '{url}/admin/realms/{realm}/users'
     GET_USER_ROLES = (
         "{url}/admin/realms/{realm}/users/{user_id}/role-mappings/clients/{client_id}"

@@ -212,7 +212,7 @@ class KeycloakClient:
             client_id=settings.KEYCLOAK_CLIENT_ID_FRONT,
             token=token
         ))['id']
-        url = schemas.KeycloakEndpoint.ADD_USER_ROLES.value.format(
+        url = schemas.KeycloakEndpoint.USER_ROLES.value.format(
             url=self.url,
             realm=self.realm,
             user_id=user_id,
@@ -221,6 +221,29 @@ class KeycloakClient:
         roles = roles if isinstance(roles, list) else [roles]
         async with httpx.AsyncClient() as client:
             response = await client.post(url, headers=headers, json=roles)
+            response.raise_for_status()
+
+    async def clear_user_roles(
+        self,
+        user_id: str,
+        roles: Union[Dict, List[Dict]],
+        token: Union[str, None] = None
+    ) -> None:
+        token = token if token else await self.get_active_access_token()
+        headers = self.get_token_auth_headers(token)
+        client_id = (await self.get_client(
+            client_id=settings.KEYCLOAK_CLIENT_ID_FRONT,
+            token=token
+        ))['id']
+        url = schemas.KeycloakEndpoint.USER_ROLES.value.format(
+            url=self.url,
+            realm=self.realm,
+            user_id=user_id,
+            client_id=client_id,
+        )
+        roles = await self.get_user_roles(user_id=user_id, client_id=client_id, token=token)
+        async with httpx.AsyncClient() as client:
+            response = await client.request('delete', url, headers=headers, json=roles)
             response.raise_for_status()
 
     async def get_user_by_username(self, username: str, token: Union[str, None] = None) -> Dict:
