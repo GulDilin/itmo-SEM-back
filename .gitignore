@@ -166,3 +166,7 @@ cython_debug/
 README.html
 
 pyrightconfig.json
+.reports
+archive
+pytest_html_report
+output.json

@@ -98,7 +98,7 @@ async def test_table_columns(table_name, expected_table_cols) -> None:
 async def create_order_type(utils) -> Tuple[entities.OrderType, dict]:
     async with wrap_session() as session:
         service_v = services.OrderTypeService(session)
-        fields = {"name": "test"}
+        fields = {"name": "test", "dep_type": "DEFECT"}
         create_model = schemas.OrderTypeCreate(**fields)
         created = await service_v.create(create_model)
         await session.commit()

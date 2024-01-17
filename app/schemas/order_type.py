@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -8,6 +8,7 @@ from .util import TimestampedWithId
 
 class OrderTypeCreate(BaseModel):
     name: str
+    dep_type: str
 
 
 class OrderTypeUpdate(BaseModel):
@@ -16,5 +17,5 @@ class OrderTypeUpdate(BaseModel):
 
 class OrderType(TimestampedWithId):
     name: str
-    dep_type: str
+    dep_type: Optional[str]
     params: List[OrderTypeParam]

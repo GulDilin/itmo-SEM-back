@@ -20,5 +20,6 @@ class OrderTypeService(BaseService):
         return await self._create(
             item=entities.OrderType(
                 name=item.name,
+                dep_type=item.dep_type,
             )
         )
