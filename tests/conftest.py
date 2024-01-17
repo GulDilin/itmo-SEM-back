@@ -1,7 +1,7 @@
 import asyncio
 import os
 import sys
-from typing import Union
+from typing import Generator, Type, Union
 
 import pytest
 
@@ -13,7 +13,7 @@ from app.db.session import wrap_session  # noqa
 
 
 @pytest.fixture(scope="session")
-def event_loop():
+def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
@@ -47,5 +47,5 @@ class Utils:
 
 
 @pytest.fixture
-def utils():
+def utils() -> Type[Utils]:
     return Utils
