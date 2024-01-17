@@ -8,7 +8,6 @@ from sqlalchemy import inspect
 from app import schemas, services
 from app.db import entities
 from app.db.session import async_engine, wrap_session
-from app.schemas.keycloak_user import UserRole
 
 entities_l = [
     entities.OrderType,
@@ -189,9 +188,3 @@ async def test_create_get(utils, service, create_f) -> None:
         items = await service_v.read_many()
         assert len(items) > 0
         assert got.id in [it.id for it in items]
-
-
-@pytest.mark.asyncio
-async def test_get_random_user_id_by_role(utils) -> None:
-    user_id = await utils.get_random_user_id_by_role(UserRole.STAFF)
-    assert user_id

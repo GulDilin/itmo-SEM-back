@@ -4,12 +4,16 @@ import sys
 from typing import Generator, Type, Union
 
 import pytest
+from dotenv import load_dotenv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import schemas, services  # noqa
-from app.core.keycloak import get_service_client  # noqa
+from app.core.keycloak import KeycloakClient, get_service_client  # noqa
 from app.db.session import wrap_session  # noqa
+from app.settings import settings  # noqa
+
+load_dotenv()
 
 
 @pytest.fixture(scope="session")
@@ -44,6 +48,18 @@ class Utils:
             order_type_service = services.OrderTypeService(session)
             items = await order_type_service.read_many()
             return items[0].id
+
+    @staticmethod
+    async def auth_test_client() -> str:
+        KEYCLOAK_CLIENT_ID_TEST = os.getenv('KEYCLOAK_CLIENT_ID_TEST')
+        KEYCLOAK_CLIENT_SECRET_TEST = os.getenv('KEYCLOAK_CLIENT_SECRET_TEST')
+        kc = KeycloakClient(
+            url=settings.KEYCLOAK_URL,
+            realm=settings.KEYCLOAK_REALM,
+            client_id=KEYCLOAK_CLIENT_ID_TEST,
+            client_secret=KEYCLOAK_CLIENT_SECRET_TEST,
+        )
+        return await kc.get_active_access_token()
 
 
 @pytest.fixture
