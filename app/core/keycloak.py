@@ -180,13 +180,16 @@ class KeycloakClient:
                 data = []
             return data
 
-    async def get_role_by_name(self, role_name: str, token: Union[str, None] = None) -> Dict:
+    async def get_role_by_name(
+        self, role_name: str, token: Union[str, None] = None
+    ) -> Dict:
         token = token if token else await self.get_active_access_token()
         headers = self.get_token_auth_headers(token)
-        client_id = (await self.get_client(
-            client_id=settings.KEYCLOAK_CLIENT_ID_FRONT,
-            token=token
-        ))['id']
+        client_id = (
+            await self.get_client(
+                client_id=settings.KEYCLOAK_CLIENT_ID_FRONT, token=token
+            )
+        )["id"]
         url = schemas.KeycloakEndpoint.GET_ROLE.value.format(
             url=self.url,
             realm=self.realm,
@@ -196,7 +199,7 @@ class KeycloakClient:
         async with httpx.AsyncClient() as client:
             response = await client.get(url, headers=headers)
             if response.status_code == status.HTTP_404_NOT_FOUND:
-                raise error.ItemNotFound(item=f'{message.MODEL_ROLE} {role_name}')
+                raise error.ItemNotFound(item=f"{message.MODEL_ROLE} {role_name}")
             response.raise_for_status()
             return response.json()
 
@@ -204,14 +207,15 @@ class KeycloakClient:
         self,
         user_id: str,
         roles: Union[Dict, List[Dict]],
-        token: Union[str, None] = None
+        token: Union[str, None] = None,
     ) -> None:
         token = token if token else await self.get_active_access_token()
         headers = self.get_token_auth_headers(token)
-        client_id = (await self.get_client(
-            client_id=settings.KEYCLOAK_CLIENT_ID_FRONT,
-            token=token
-        ))['id']
+        client_id = (
+            await self.get_client(
+                client_id=settings.KEYCLOAK_CLIENT_ID_FRONT, token=token
+            )
+        )["id"]
         url = schemas.KeycloakEndpoint.USER_ROLES.value.format(
             url=self.url,
             realm=self.realm,
@@ -224,28 +228,31 @@ class KeycloakClient:
             response.raise_for_status()
 
     async def clear_user_roles(
-        self,
-        user_id: str,
-        token: Union[str, None] = None
+        self, user_id: str, token: Union[str, None] = None
     ) -> None:
         token = token if token else await self.get_active_access_token()
         headers = self.get_token_auth_headers(token)
-        client_id = (await self.get_client(
-            client_id=settings.KEYCLOAK_CLIENT_ID_FRONT,
-            token=token
-        ))['id']
+        client_id = (
+            await self.get_client(
+                client_id=settings.KEYCLOAK_CLIENT_ID_FRONT, token=token
+            )
+        )["id"]
         url = schemas.KeycloakEndpoint.USER_ROLES.value.format(
             url=self.url,
             realm=self.realm,
             user_id=user_id,
             client_id=client_id,
         )
-        roles = await self.get_user_roles(user_id=user_id, client_id=client_id, token=token)
+        roles = await self.get_user_roles(
+            user_id=user_id, client_id=client_id, token=token
+        )
         async with httpx.AsyncClient() as client:
-            response = await client.request('delete', url, headers=headers, json=roles)
+            response = await client.request("delete", url, headers=headers, json=roles)
             response.raise_for_status()
 
-    async def get_user_by_username(self, username: str, token: Union[str, None] = None) -> Dict:
+    async def get_user_by_username(
+        self, username: str, token: Union[str, None] = None
+    ) -> Dict:
         token = token if token else await self.get_active_access_token()
         headers = self.get_token_auth_headers(token)
         url = schemas.KeycloakEndpoint.GET_USERS.value.format(
@@ -253,7 +260,9 @@ class KeycloakClient:
             realm=self.realm,
         )
         async with httpx.AsyncClient() as client:
-            response = await client.get(url, headers=headers, params={'username': username, 'exact': True})
+            response = await client.get(
+                url, headers=headers, params={"username": username, "exact": True}
+            )
             response.raise_for_status()
             data = response.json()
             if len(data) == 0:
@@ -268,14 +277,9 @@ class KeycloakClient:
             realm=self.realm,
         )
         data = {
-            'username': user['username'],
-            'enabled': True,
-            'credentials': [
-                {
-                    'type': 'password',
-                    'value': user['password']
-                }
-            ],
+            "username": user["username"],
+            "enabled": True,
+            "credentials": [{"type": "password", "value": user["password"]}],
         }
         async with httpx.AsyncClient() as client:
             response = await client.post(url, headers=headers, json=data)

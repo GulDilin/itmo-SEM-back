@@ -10,15 +10,17 @@ from .util import StrEnum
 class KeycloakEndpoint(StrEnum):
     GET_CLIENTS = "{url}/admin/realms/{realm}/clients"
     GET_CLIENT = "{url}/admin/realms/{realm}/clients/{client_id}"
-    GET_ROLE = '{url}/admin/realms/{realm}/clients/{client_id}/roles/{role_name}'
+    GET_ROLE = "{url}/admin/realms/{realm}/clients/{client_id}/roles/{role_name}"
     GET_ROLES = "{url}/admin/realms/{realm}/clients/{client_id}/roles"
     GET_ROLE_USERS = (
         "{url}/admin/realms/{realm}/clients/{client_id}/roles/{role_name}/users"
     )
     GET_USERS = "{url}/admin/realms/{realm}/users"
     GET_USER = "{url}/admin/realms/{realm}/users/{user_id}"
-    USER_ROLES = '{url}/admin/realms/{realm}/users/{user_id}/role-mappings/clients/{client_id}'
-    CREATE_USER = '{url}/admin/realms/{realm}/users'
+    USER_ROLES = (
+        "{url}/admin/realms/{realm}/users/{user_id}/role-mappings/clients/{client_id}"
+    )
+    CREATE_USER = "{url}/admin/realms/{realm}/users"
     GET_USER_ROLES = (
         "{url}/admin/realms/{realm}/users/{user_id}/role-mappings/clients/{client_id}"
     )

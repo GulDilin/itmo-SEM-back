@@ -164,11 +164,11 @@ async def get_user_data(
     roles = token_data.get("roles")
     if not roles:
         with suppress(Exception):
-            roles = token_data["resource_access"][settings.KEYCLOAK_CLIENT_ID_FRONT]["roles"]
+            roles = token_data["resource_access"][settings.KEYCLOAK_CLIENT_ID_FRONT][
+                "roles"
+            ]
     yield schemas.User(
-        user_id=token_data["sub"],
-        name=token_data["preferred_username"],
-        roles=roles
+        user_id=token_data["sub"], name=token_data["preferred_username"], roles=roles
     )
 
 

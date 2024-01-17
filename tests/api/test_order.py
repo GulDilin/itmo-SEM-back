@@ -11,10 +11,15 @@ from app.schemas.order import OrderStatus
 base_url = "http://localhost:5011"
 
 
-async def login():
+async def admin_login():
     keycloak = get_service_client()
-    token = await keycloak.get_token_by_secret()
-    return token
+    admin_token = await keycloak.get_token_by_secret()
+    return admin_token
+
+
+async def customer_login(utils):
+    customer_token = await utils.auth_test_client()
+    return customer_token
 
 
 @pytest.mark.asyncio
@@ -26,31 +31,13 @@ async def test_healthcheck():
 
 
 @pytest.mark.asyncio
-async def test_3_1_6_user_can_create_order():
-    token = await login()
-    async with AsyncClient() as ac:
-        response = await ac.get(
-            f"{base_url}/api/order_type/", headers={"Authorization": f"Bearer {token}"}
-        )
-        assert response.status_code == 200
-        assert response.json()["count"] == 3
-        order_type_id = response.json()["results"][0]["id"]
-        response = await ac.post(
-            f"{base_url}/api/order_type/{order_type_id}/order/",
-            headers={"Authorization": f"Bearer {token}"},
-            json={
-                "user_customer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
-                "user_implementer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
-                "order_type_id": order_type_id,
-            },
-        )
-        assert response.status_code == 200
-        assert response.json()["status"] == "NEW"
+async def test_3_1_5_customer_cannot_view_requests(utils):
+    token = await admin_login()
+    consumer_token = await customer_login(utils)
 
-
-@pytest.mark.asyncio
-async def test_3_1_7_user_can_create_wood_request():
-    token = await login()
+    kc = get_service_client()
+    user = await kc.get_user_by_username("service-account-service-client")
+    admin_id = user["id"]
     async with AsyncClient() as ac:
         response = await ac.get(
             f"{base_url}/api/order_type/", headers={"Authorization": f"Bearer {token}"}
@@ -64,8 +51,8 @@ async def test_3_1_7_user_can_create_wood_request():
             f"{base_url}/api/order_type/{order_type_id}/order/",
             headers={"Authorization": f"Bearer {token}"},
             json={
-                "user_customer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
-                "user_implementer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
+                "user_customer": admin_id,
+                "user_implementer": admin_id,
                 "order_type_id": order_type_id,
             },
         )
@@ -76,8 +63,82 @@ async def test_3_1_7_user_can_create_wood_request():
             f"{base_url}/api/order_type/{request_type_id}/order/",
             headers={"Authorization": f"Bearer {token}"},
             json={
-                "user_customer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
-                "user_implementer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
+                "user_customer": admin_id,
+                "user_implementer": admin_id,
+                "order_type_id": request_type_id,
+                "parent_order_id": response.json()["id"],
+            },
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == "NEW"
+
+        response = await ac.get(
+            f"{base_url}/api/order_type/{request_type_id}/order/{response.json()['id']}/",
+            headers={"Authorization": f"Bearer {consumer_token}"},
+        )
+        print(response.json())
+        assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_3_1_6_user_can_create_order():
+    token = await admin_login()
+    kc = get_service_client()
+    user = await kc.get_user_by_username("service-account-service-client")
+    admin_id = user["id"]
+    async with AsyncClient() as ac:
+        response = await ac.get(
+            f"{base_url}/api/order_type/", headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 200
+        assert response.json()["count"] == 3
+        order_type_id = response.json()["results"][0]["id"]
+        response = await ac.post(
+            f"{base_url}/api/order_type/{order_type_id}/order/",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "user_customer": admin_id,
+                "user_implementer": admin_id,
+                "order_type_id": order_type_id,
+            },
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == "NEW"
+
+
+@pytest.mark.asyncio
+async def test_3_1_7_user_can_create_wood_request():
+    token = await admin_login()
+    kc = get_service_client()
+    user = await kc.get_user_by_username("service-account-service-client")
+    admin_id = user["id"]
+    async with AsyncClient() as ac:
+        response = await ac.get(
+            f"{base_url}/api/order_type/", headers={"Authorization": f"Bearer {token}"}
+        )
+        assert response.status_code == 200
+        assert response.json()["count"] == 3
+        order_type_id = response.json()["results"][0]["id"]
+        request_type_id = response.json()["results"][1]["id"]
+
+        response = await ac.post(
+            f"{base_url}/api/order_type/{order_type_id}/order/",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "user_customer": admin_id,
+                "user_implementer": admin_id,
+                "order_type_id": order_type_id,
+            },
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == "NEW"
+
+        response = await ac.post(
+            f"{base_url}/api/order_type/{request_type_id}/order/",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "user_customer": admin_id,
+                "user_implementer": admin_id,
                 "order_type_id": request_type_id,
                 "parent_order_id": response.json()["id"],
             },
@@ -88,7 +149,10 @@ async def test_3_1_7_user_can_create_wood_request():
 
 @pytest.mark.asyncio
 async def test_3_1_13_user_can_create_defect_request():
-    token = await login()
+    token = await admin_login()
+    kc = get_service_client()
+    user = await kc.get_user_by_username("service-account-service-client")
+    admin_id = user["id"]
     async with AsyncClient() as ac:
         response = await ac.get(
             f"{base_url}/api/order_type/", headers={"Authorization": f"Bearer {token}"}
@@ -103,8 +167,8 @@ async def test_3_1_13_user_can_create_defect_request():
             f"{base_url}/api/order_type/{order_type_id}/order/",
             headers={"Authorization": f"Bearer {token}"},
             json={
-                "user_customer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
-                "user_implementer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
+                "user_customer": admin_id,
+                "user_implementer": admin_id,
                 "order_type_id": order_type_id,
             },
         )
@@ -115,8 +179,8 @@ async def test_3_1_13_user_can_create_defect_request():
             f"{base_url}/api/order_type/{request_type_id}/order/",
             headers={"Authorization": f"Bearer {token}"},
             json={
-                "user_customer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
-                "user_implementer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
+                "user_customer": admin_id,
+                "user_implementer": admin_id,
                 "order_type_id": request_type_id,
                 "parent_order_id": response.json()["id"],
             },
@@ -128,8 +192,8 @@ async def test_3_1_13_user_can_create_defect_request():
             f"{base_url}/api/order_type/{request_type_id}/order/",
             headers={"Authorization": f"Bearer {token}"},
             json={
-                "user_customer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
-                "user_implementer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
+                "user_customer": admin_id,
+                "user_implementer": admin_id,
                 "order_type_id": defect_type_id,
                 "parent_order_id": response.json()["id"],
             },
@@ -140,7 +204,10 @@ async def test_3_1_13_user_can_create_defect_request():
 
 @pytest.mark.asyncio
 async def test_3_1_17_user_can_filter_requests():
-    token = await login()
+    token = await admin_login()
+    kc = get_service_client()
+    user = await kc.get_user_by_username("service-account-service-client")
+    admin_id = user["id"]
     async with AsyncClient() as ac:
         response = await ac.get(
             f"{base_url}/api/order_type/", headers={"Authorization": f"Bearer {token}"}
@@ -154,8 +221,8 @@ async def test_3_1_17_user_can_filter_requests():
                 f"{base_url}/api/order_type/{order_type_id}/order/",
                 headers={"Authorization": f"Bearer {token}"},
                 json={
-                    "user_customer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
-                    "user_implementer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
+                    "user_customer": admin_id,
+                    "user_implementer": admin_id,
                     "order_type_id": order_type_id,
                 },
             )
@@ -209,7 +276,10 @@ async def test_3_1_17_user_can_filter_requests():
 async def test_3_1_20_user_can_change_status_of_any_request(
     new_statuses_updates: List[str],
 ):
-    token = await login()
+    token = await admin_login()
+    kc = get_service_client()
+    user = await kc.get_user_by_username("service-account-service-client")
+    admin_id = user["id"]
     async with AsyncClient() as ac:
         response = await ac.get(
             f"{base_url}/api/order_type/", headers={"Authorization": f"Bearer {token}"}
@@ -224,8 +294,8 @@ async def test_3_1_20_user_can_change_status_of_any_request(
             f"{base_url}/api/order_type/{order_type_id}/order/",
             headers={"Authorization": f"Bearer {token}"},
             json={
-                "user_customer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
-                "user_implementer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
+                "user_customer": admin_id,
+                "user_implementer": admin_id,
                 "order_type_id": order_type_id,
             },
         )
@@ -240,8 +310,8 @@ async def test_3_1_20_user_can_change_status_of_any_request(
             f"{base_url}/api/order_type/{request_type_id}/order/",
             headers={"Authorization": f"Bearer {token}"},
             json={
-                "user_customer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
-                "user_implementer": "362583d6-fa4d-454a-99e8-0fcec57706a2",
+                "user_customer": admin_id,
+                "user_implementer": admin_id,
                 "order_type_id": request_type_id,
                 "parent_order_id": order_response.json()["id"],
             },
