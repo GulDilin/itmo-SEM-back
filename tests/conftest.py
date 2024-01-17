@@ -31,7 +31,7 @@ class Utils:
     async def get_random_user_id_by_role(role_name: str) -> Union[str, None]:
         kc = get_service_client()
         if data := await kc.get_role_with_users(role_name=role_name):
-            return data[0]['id']
+            return data[0]["id"]
         return None
 
     @staticmethod
@@ -40,7 +40,9 @@ class Utils:
 
     @staticmethod
     async def get_random_user_id_order_manager() -> Union[str, None]:
-        return await Utils.get_random_user_id_by_role(schemas.UserRole.STAFF_ORDER_MANAGER)
+        return await Utils.get_random_user_id_by_role(
+            schemas.UserRole.STAFF_ORDER_MANAGER
+        )
 
     @staticmethod
     async def get_order_type_id() -> Union[str, None]:
@@ -51,8 +53,8 @@ class Utils:
 
     @staticmethod
     async def auth_test_client() -> str:
-        KEYCLOAK_CLIENT_ID_TEST = os.getenv('KEYCLOAK_CLIENT_ID_TEST')
-        KEYCLOAK_CLIENT_SECRET_TEST = os.getenv('KEYCLOAK_CLIENT_SECRET_TEST')
+        KEYCLOAK_CLIENT_ID_TEST = os.getenv("KEYCLOAK_CLIENT_ID_TEST")
+        KEYCLOAK_CLIENT_SECRET_TEST = os.getenv("KEYCLOAK_CLIENT_SECRET_TEST")
         kc = KeycloakClient(
             url=settings.KEYCLOAK_URL,
             realm=settings.KEYCLOAK_REALM,
@@ -63,8 +65,8 @@ class Utils:
 
     @staticmethod
     def get_test_client_username() -> str:
-        KEYCLOAK_CLIENT_ID_TEST = os.getenv('KEYCLOAK_CLIENT_ID_TEST')
-        return f'service-account-{KEYCLOAK_CLIENT_ID_TEST}'
+        KEYCLOAK_CLIENT_ID_TEST = os.getenv("KEYCLOAK_CLIENT_ID_TEST")
+        return f"service-account-{KEYCLOAK_CLIENT_ID_TEST}"
 
 
 @pytest.fixture
