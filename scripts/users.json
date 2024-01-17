@@ -1,0 +1,19 @@
+{
+    "users": [
+        {
+            "username": "staff1",
+            "password": "test",
+            "roles": ["staff"]
+        },
+        {
+            "username": "staff_order_manager",
+            "password": "test",
+            "roles": ["staff", "staff_order_manager"]
+        },
+        {
+            "username": "super_customer",
+            "password": "test",
+            "roles": ["customer"]
+        }
+    ]
+}

@@ -1,8 +1,9 @@
 import time
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import httpx
+from fastapi import status
 
 from app import schemas
 from app.core import auth, error, message
@@ -178,6 +179,85 @@ class KeycloakClient:
             if len(data) == 0:
                 data = []
             return data
+
+    async def get_role_by_name(self, role_name: str, token: Union[str, None] = None) -> Dict:
+        token = token if token else await self.get_active_access_token()
+        headers = self.get_token_auth_headers(token)
+        client_id = (await self.get_client(
+            client_id=settings.KEYCLOAK_CLIENT_ID_FRONT,
+            token=token
+        ))['id']
+        url = schemas.KeycloakEndpoint.GET_ROLE.value.format(
+            url=self.url,
+            realm=self.realm,
+            client_id=client_id,
+            role_name=role_name,
+        )
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers)
+            if response.status_code == status.HTTP_404_NOT_FOUND:
+                raise error.ItemNotFound(item=f'{message.MODEL_ROLE} {role_name}')
+            response.raise_for_status()
+            return response.json()
+
+    async def add_user_roles(
+        self,
+        user_id: str,
+        roles: Union[Dict, List[Dict]],
+        token: Union[str, None] = None
+    ) -> None:
+        token = token if token else await self.get_active_access_token()
+        headers = self.get_token_auth_headers(token)
+        client_id = (await self.get_client(
+            client_id=settings.KEYCLOAK_CLIENT_ID_FRONT,
+            token=token
+        ))['id']
+        url = schemas.KeycloakEndpoint.ADD_USER_ROLES.value.format(
+            url=self.url,
+            realm=self.realm,
+            user_id=user_id,
+            client_id=client_id,
+        )
+        roles = roles if isinstance(roles, list) else [roles]
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, headers=headers, json=roles)
+            response.raise_for_status()
+
+    async def get_user_by_username(self, username: str, token: Union[str, None] = None) -> Dict:
+        token = token if token else await self.get_active_access_token()
+        headers = self.get_token_auth_headers(token)
+        url = schemas.KeycloakEndpoint.GET_USERS.value.format(
+            url=self.url,
+            realm=self.realm,
+        )
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers, params={'username': username, 'exact': True})
+            response.raise_for_status()
+            data = response.json()
+            if len(data) == 0:
+                raise error.ItemNotFound(item=message.MODEL_USER)
+            return data[0]
+
+    async def create_user(self, user: dict, token: Union[str, None] = None) -> None:
+        token = token if token else await self.get_active_access_token()
+        headers = self.get_token_auth_headers(token)
+        url = schemas.KeycloakEndpoint.CREATE_USER.value.format(
+            url=self.url,
+            realm=self.realm,
+        )
+        data = {
+            'username': user['username'],
+            'enabled': True,
+            'credentials': [
+                {
+                    'type': 'password',
+                    'value': user['password']
+                }
+            ],
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, headers=headers, json=data)
+            response.raise_for_status()
 
     async def get_users_with_roles(self, token: Optional[str] = None) -> List:
         token = token if token else await self.get_active_access_token()
