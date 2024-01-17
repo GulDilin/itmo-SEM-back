@@ -1,3 +1,4 @@
+from contextlib import suppress
 from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 from uuid import UUID
 
@@ -12,6 +13,7 @@ from app.core import auth
 from app.db import entities
 from app.db.session import get_session
 from app.log import logger
+from app.settings import settings
 
 
 async def get_order_type_service(
@@ -159,12 +161,14 @@ async def get_user_data(
     token_data: dict = Depends(get_token_data),
 ) -> AsyncGenerator[schemas.User, None]:
     logger.info(f"{token_data=}")
+    roles = token_data.get("roles")
+    if not roles:
+        with suppress(Exception):
+            roles = token_data["resource_access"][settings.KEYCLOAK_CLIENT_ID_FRONT]["roles"]
     yield schemas.User(
         user_id=token_data["sub"],
         name=token_data["preferred_username"],
-        roles=token_data.get("roles", [])
-        if token_data.get("roles") is not None
-        else token_data["resource_access"]["frontend-client"]["roles"],
+        roles=roles
     )
 
 

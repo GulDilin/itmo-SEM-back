@@ -41,6 +41,9 @@ ignore_missing_imports = "True"
 warn_redundant_casts = "True"
 warn_unused_ignores = "True"
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
