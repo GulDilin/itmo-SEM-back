@@ -8,7 +8,7 @@ from app.core.keycloak import get_service_client
 from app.schemas.order import OrderStatus
 
 # client = TestClient(app)
-base_url = "http://localhost:5011"
+base_url = "http://localhost:5010"
 
 
 async def login():
