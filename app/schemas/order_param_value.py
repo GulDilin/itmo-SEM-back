@@ -1,8 +1,9 @@
 from typing import Optional
+
 from pydantic import BaseModel
 
-from .util import TimestampedWithId
 from .order_type_param import OrderTypeParam
+from .util import TimestampedWithId
 
 
 class OrderParamValueCreate(BaseModel):

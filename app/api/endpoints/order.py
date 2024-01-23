@@ -55,6 +55,26 @@ async def get_orders(
     )
 
 
+@router.get("/{order_type_id}/test-order/", response_model=schemas.PaginatedResponse)
+async def test_get_orders(
+    order_type: Optional[entities.OrderType] = Depends(deps.get_path_order_type),
+    order_service: services.OrderService = Depends(deps.get_order_service),
+    sorting_list: schemas.SortingList = Depends(deps.get_sorting_list),
+    filter_data: dict = Depends(deps.get_order_filter),
+    user_data: schemas.User = Depends(deps.get_user_data),
+) -> schemas.PaginatedResponse:
+    if order_type:
+        filter_data["order_type_id"] = str(order_type.id)
+    if "staff" not in user_data.roles:
+        filter_data["user_customer"] = str(user_data.user_id)
+
+    return await order_service.read_many_paginated(
+        wrapper_class=schemas.Order,
+        sorting_list=sorting_list,
+        **filter_data,
+    )
+
+
 @router.get("/{order_type_id}/order/{order_id}/", response_model=schemas.Order)
 @router1.get("/{order_id}/", response_model=schemas.Order)
 async def get_order(

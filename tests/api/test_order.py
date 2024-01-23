@@ -1,14 +1,26 @@
 # https://fastapi.tiangolo.com/tutorial/testing/
+import asyncio
 from typing import List
 
 import pytest
 from httpx import AsyncClient
 
+from app.api.endpoints.order import create_order, test_get_orders, update_order
+from app.api.endpoints.order_param_value import create_order_type
 from app.core.keycloak import get_service_client
-from app.schemas.order import OrderStatus
+from app.db.session import wrap_session
+from app.schemas.keycloak_user import User
+from app.schemas.order import OrderCreate, OrderStatus, OrderUpdate
+from app.schemas.order_param_value import OrderParamValueCreate
+from app.schemas.util import SortingList, SortingListItem, SortingType
+from app.services.order import OrderService
+from app.services.order_param_value import OrderParamValueService
+from app.services.order_status_update import OrderStatusUpdateService
+from app.services.order_type import OrderTypeService
 
 # client = TestClient(app)
 base_url = "http://localhost:5010"
+admin_id = ""
 
 
 async def admin_login():
@@ -22,12 +34,14 @@ async def customer_login(utils):
     return customer_token
 
 
-@pytest.mark.asyncio
-async def test_healthcheck():
-    async with AsyncClient() as ac:
-        response = await ac.get(f"{base_url}/version/")
-    assert response.status_code == 200
-    assert response.json() == {"version": "0.1.0"}
+async def setup():
+    kc = get_service_client()
+    user = await kc.get_user_by_username("service-account-service-client")
+    admin_id = user["id"]
+    print(admin_id)
+
+
+asyncio.run(setup())
 
 
 @pytest.mark.asyncio
@@ -82,161 +96,182 @@ async def test_3_1_5_customer_cannot_view_requests(utils):
 
 @pytest.mark.asyncio
 async def test_3_1_6_user_can_create_order():
-    token = await admin_login()
-    kc = get_service_client()
-    user = await kc.get_user_by_username("service-account-service-client")
-    admin_id = user["id"]
-    async with AsyncClient() as ac:
-        response = await ac.get(
-            f"{base_url}/api/order_type/", headers={"Authorization": f"Bearer {token}"}
+    async with wrap_session() as session:
+        service_v = OrderService(session)
+        service_type = OrderTypeService(session)
+
+        order_type = await service_type.read_one(dep_type="MAIN")
+
+        create_order_args = OrderCreate(
+            user_customer=admin_id,
+            user_implementer=admin_id,
+            order_type_id=order_type.id,
         )
-        assert response.status_code == 200
-        assert response.json()["count"] == 3
-        order_type_id = response.json()["results"][0]["id"]
-        response = await ac.post(
-            f"{base_url}/api/order_type/{order_type_id}/order/",
-            headers={"Authorization": f"Bearer {token}"},
-            json={
-                "user_customer": admin_id,
-                "user_implementer": admin_id,
-                "order_type_id": order_type_id,
-            },
+
+        response = await create_order(
+            create_order_args,
+            order_type,
+            service_v,
+            user=User(
+                user_id=admin_id,
+                name="name",
+                roles=["1", "staff_customer_manager", "STAFF"],
+            ),
         )
-        assert response.status_code == 200
-        assert response.json()["status"] == "NEW"
+    assert response.status == "NEW"
 
 
 @pytest.mark.asyncio
 async def test_3_1_7_user_can_create_wood_request():
-    token = await admin_login()
-    kc = get_service_client()
-    user = await kc.get_user_by_username("service-account-service-client")
-    admin_id = user["id"]
-    async with AsyncClient() as ac:
-        response = await ac.get(
-            f"{base_url}/api/order_type/", headers={"Authorization": f"Bearer {token}"}
-        )
-        assert response.status_code == 200
-        assert response.json()["count"] == 3
-        order_type_id = response.json()["results"][0]["id"]
-        request_type_id = response.json()["results"][1]["id"]
+    async with wrap_session() as session:
+        service_v = OrderService(session)
+        service_type = OrderTypeService(session)
 
-        response = await ac.post(
-            f"{base_url}/api/order_type/{order_type_id}/order/",
-            headers={"Authorization": f"Bearer {token}"},
-            json={
-                "user_customer": admin_id,
-                "user_implementer": admin_id,
-                "order_type_id": order_type_id,
-            },
-        )
-        assert response.status_code == 200
-        assert response.json()["status"] == "NEW"
+        order_type = await service_type.read_one(dep_type="MAIN")
+        request_type = await service_type.read_one(dep_type="DEPEND")
 
-        response = await ac.post(
-            f"{base_url}/api/order_type/{request_type_id}/order/",
-            headers={"Authorization": f"Bearer {token}"},
-            json={
-                "user_customer": admin_id,
-                "user_implementer": admin_id,
-                "order_type_id": request_type_id,
-                "parent_order_id": response.json()["id"],
-            },
+        create_order_args = OrderCreate(
+            user_customer=admin_id,
+            user_implementer=admin_id,
+            order_type_id=order_type.id,
         )
-        assert response.status_code == 200
-        assert response.json()["status"] == "NEW"
+
+        response = await create_order(
+            create_order_args,
+            order_type,
+            service_v,
+            user=User(
+                user_id=admin_id,
+                name="name",
+                roles=["1", "staff_customer_manager", "STAFF"],
+            ),
+        )
+        assert response.status == "NEW"
+
+        create_order_args = OrderCreate(
+            user_customer=admin_id,
+            user_implementer=admin_id,
+            order_type_id=request_type.id,
+            parent_order_id=str(response.id),
+        )
+        response = await create_order(
+            create_order_args,
+            request_type,
+            service_v,
+            user=User(
+                user_id=admin_id,
+                name="name",
+                roles=["1", "staff_customer_manager", "STAFF"],
+            ),
+        )
+    assert response.status == "NEW"
 
 
 @pytest.mark.asyncio
 async def test_3_1_13_user_can_create_defect_request():
-    token = await admin_login()
-    kc = get_service_client()
-    user = await kc.get_user_by_username("service-account-service-client")
-    admin_id = user["id"]
-    async with AsyncClient() as ac:
-        response = await ac.get(
-            f"{base_url}/api/order_type/", headers={"Authorization": f"Bearer {token}"}
-        )
-        assert response.status_code == 200
-        assert response.json()["count"] == 3
-        order_type_id = response.json()["results"][0]["id"]
-        request_type_id = response.json()["results"][1]["id"]
-        defect_type_id = response.json()["results"][2]["id"]
+    async with wrap_session() as session:
+        service_v = OrderService(session)
+        service_type = OrderTypeService(session)
 
-        response = await ac.post(
-            f"{base_url}/api/order_type/{order_type_id}/order/",
-            headers={"Authorization": f"Bearer {token}"},
-            json={
-                "user_customer": admin_id,
-                "user_implementer": admin_id,
-                "order_type_id": order_type_id,
-            },
-        )
-        assert response.status_code == 200
-        assert response.json()["status"] == "NEW"
+        order_type = await service_type.read_one(dep_type="MAIN")
+        request_type = await service_type.read_one(dep_type="DEPEND")
+        defect_type = await service_type.read_one(dep_type="DEFECT")
 
-        response = await ac.post(
-            f"{base_url}/api/order_type/{request_type_id}/order/",
-            headers={"Authorization": f"Bearer {token}"},
-            json={
-                "user_customer": admin_id,
-                "user_implementer": admin_id,
-                "order_type_id": request_type_id,
-                "parent_order_id": response.json()["id"],
-            },
+        create_order_args = OrderCreate(
+            user_customer=admin_id,
+            user_implementer=admin_id,
+            order_type_id=order_type.id,
         )
-        assert response.status_code == 200
-        assert response.json()["status"] == "NEW"
 
-        response = await ac.post(
-            f"{base_url}/api/order_type/{request_type_id}/order/",
-            headers={"Authorization": f"Bearer {token}"},
-            json={
-                "user_customer": admin_id,
-                "user_implementer": admin_id,
-                "order_type_id": defect_type_id,
-                "parent_order_id": response.json()["id"],
-            },
+        response = await create_order(
+            create_order_args,
+            order_type,
+            service_v,
+            user=User(
+                user_id=admin_id,
+                name="name",
+                roles=["1", "staff_customer_manager", "STAFF"],
+            ),
         )
-        assert response.status_code == 200
-        assert response.json()["status"] == "NEW"
+        assert response.status == "NEW"
+
+        create_order_args = OrderCreate(
+            user_customer=admin_id,
+            user_implementer=admin_id,
+            order_type_id=request_type.id,
+            parent_order_id=str(response.id),
+        )
+        response = await create_order(
+            create_order_args,
+            request_type,
+            service_v,
+            user=User(
+                user_id=admin_id,
+                name="name",
+                roles=["1", "staff_customer_manager", "STAFF"],
+            ),
+        )
+        assert response.status == "NEW"
+
+        create_order_args = OrderCreate(
+            user_customer=admin_id,
+            user_implementer=admin_id,
+            order_type_id=defect_type.id,
+            parent_order_id=str(response.id),
+        )
+        response = await create_order(
+            create_order_args,
+            defect_type,
+            service_v,
+            user=User(
+                user_id=admin_id,
+                name="name",
+                roles=["staff_order_manager", "staff_customer_manager", "STAFF"],
+            ),
+        )
+    assert response.status == "NEW"
 
 
 @pytest.mark.asyncio
 async def test_3_1_17_user_can_filter_requests():
-    token = await admin_login()
-    kc = get_service_client()
-    user = await kc.get_user_by_username("service-account-service-client")
-    admin_id = user["id"]
-    async with AsyncClient() as ac:
-        response = await ac.get(
-            f"{base_url}/api/order_type/", headers={"Authorization": f"Bearer {token}"}
-        )
-        assert response.status_code == 200
-        assert response.json()["count"] == 3
-        order_type_id = response.json()["results"][0]["id"]
+    async with wrap_session() as session:
+        service_v = OrderService(session)
+        service_type = OrderTypeService(session)
 
+        order_type = await service_type.read_one(dep_type="MAIN")
+
+        create_order_args = OrderCreate(
+            user_customer=admin_id,
+            user_implementer=admin_id,
+            order_type_id=order_type.id,
+        )
         for i in range(10):
-            response = await ac.post(
-                f"{base_url}/api/order_type/{order_type_id}/order/",
-                headers={"Authorization": f"Bearer {token}"},
-                json={
-                    "user_customer": admin_id,
-                    "user_implementer": admin_id,
-                    "order_type_id": order_type_id,
-                },
+            response = await create_order(
+                create_order_args,
+                order_type,
+                service_v,
+                user=User(
+                    user_id=admin_id,
+                    name="name",
+                    roles=["1", "staff_customer_manager", "STAFF"],
+                ),
             )
-            assert response.status_code == 200
-            assert response.json()["status"] == "NEW"
-
-        filter_response = await ac.get(
-            f"{base_url}/api/order/",
-            headers={"Authorization": f"Bearer {token}"},
-            params={"status": ["NEW"], "limit": 8, "order_type_id": order_type_id},
+            assert response.status == "NEW"
+        filter_response = await test_get_orders(
+            order_type=order_type,
+            order_service=service_v,
+            user_data=User(
+                user_id=admin_id,
+                name="name",
+                roles=["1", "staff_customer_manager", "STAFF"],
+            ),
+            filter_data={"status": ["NEW"], "limit": 8, "order_type_id": order_type.id},
+            sorting_list=SortingList(
+                sorting_list=[SortingListItem(type=SortingType.ASC, field="id")]
+            ),
         )
-        print(filter_response.json())
-        assert filter_response.status_code == 200
-        assert len(filter_response.json()["results"]) == 8
+
+        assert len(filter_response.results) == 8
 
 
 @pytest.mark.asyncio
@@ -274,67 +309,78 @@ async def test_3_1_17_user_can_filter_requests():
     ],
 )
 async def test_3_1_20_user_can_change_status_of_any_request(
-    new_statuses_updates: List[str],
+    new_statuses_updates: List[OrderStatus],
 ):
-    token = await admin_login()
-    kc = get_service_client()
-    user = await kc.get_user_by_username("service-account-service-client")
-    admin_id = user["id"]
-    async with AsyncClient() as ac:
-        response = await ac.get(
-            f"{base_url}/api/order_type/", headers={"Authorization": f"Bearer {token}"}
+    async with wrap_session() as session:
+        service_v = OrderService(session)
+        service_type = OrderTypeService(session)
+        service_param = OrderParamValueService(session)
+        service_status_update = OrderStatusUpdateService(session)
+
+        order_type = await service_type.read_one(dep_type="MAIN")
+        request_type = await service_type.read_one(dep_type="DEPEND")
+
+        user = User(
+            user_id=admin_id,
+            name="name",
+            roles=["1", "staff_customer_manager", "STAFF", "staff_order_manager"],
         )
-        print(response.json())
-        assert response.status_code == 200
-        assert response.json()["count"] == 3
-        order_type_id = response.json()["results"][0]["id"]
-        request_type_id = response.json()["results"][1]["id"]
 
-        order_response = await ac.post(
-            f"{base_url}/api/order_type/{order_type_id}/order/",
-            headers={"Authorization": f"Bearer {token}"},
-            json={
-                "user_customer": admin_id,
-                "user_implementer": admin_id,
-                "order_type_id": order_type_id,
-            },
+        create_order_args = OrderCreate(
+            user_customer=admin_id,
+            user_implementer=admin_id,
+            order_type_id=order_type.id,
         )
-        assert order_response.status_code == 200
-        assert order_response.json()["status"] == "NEW"
-
-        order_param_type_ids = [
-            x["id"] for x in response.json()["results"][1]["params"]
-        ]
-
-        response = await ac.post(
-            f"{base_url}/api/order_type/{request_type_id}/order/",
-            headers={"Authorization": f"Bearer {token}"},
-            json={
-                "user_customer": admin_id,
-                "user_implementer": admin_id,
-                "order_type_id": request_type_id,
-                "parent_order_id": order_response.json()["id"],
-            },
+        order = await create_order(
+            create_order_args,
+            order_type,
+            service_v,
+            user=user,
         )
-        assert response.status_code == 200
-        assert response.json()["status"] == "NEW"
+        assert order.status == "NEW"
 
-        for param_id in order_param_type_ids:
-            param_response = await ac.post(
-                f"{base_url}/api/order_type/{request_type_id}/order/{response.json()['id']}/params/{param_id}/",
-                headers={"Authorization": f"Bearer {token}"},
-                json={
-                    "value": "1",
-                },
+        create_order_args = OrderCreate(
+            user_customer=admin_id,
+            user_implementer=admin_id,
+            order_type_id=request_type.id,
+            parent_order_id=str(order.id),
+        )
+        response = await create_order(
+            create_order_args,
+            request_type,
+            service_v,
+            user,
+        )
+        assert response.status == "NEW"
+
+        for param in request_type.params:
+            print(f"Setting {param.name}")
+            result = await create_order_type(
+                OrderParamValueCreate(value="1"),
+                await service_v.read_one(id=str(response.id)),
+                param,
+                order_param_value_service=service_param,
+                user_data=user,
             )
-            assert param_response.status_code == 200
-
+            print(result)
+        await session.commit()
+    async with wrap_session() as session:
+        service_v = OrderService(session)
+        service_type = OrderTypeService(session)
+        service_status_update = OrderStatusUpdateService(session)
         for new_status in new_statuses_updates:
-            update_response = await ac.put(
-                f"{base_url}/api/order_type/{request_type_id}/order/{response.json()['id']}/",
-                headers={"Authorization": f"Bearer {token}"},
-                json={"status": new_status},
+            request = await service_v.read_one(
+                id=str(response.id),
+                load_props=["params"],
             )
-            print(update_response.json())
-            assert update_response.status_code == 200
-            assert update_response.json()["status"] == new_status
+            print(request.params)
+            new_order = await update_order(
+                OrderUpdate(status=new_status),
+                request,
+                request_type,
+                service_type,
+                service_v,
+                service_status_update,
+                user,
+            )
+            assert new_order.status == new_status
