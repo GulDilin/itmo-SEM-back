@@ -141,3 +141,17 @@ class OrderStatusUpdate(TimeStampedWithId):
 
 
 OrderStatusUpdateSortingFields = {*DefaultSortingFields, "order_id"}
+
+
+class Material(TimeStampedWithId):
+    name = sa.Column(sa.String(100))
+    amount = sa.Column(sa.Integer)
+    value_type = sa.Column(sa.String(100))
+    item_price = sa.Column(sa.Integer)
+    user_creator = sa.Column(sa.String(100))
+    user_updator = sa.Column(sa.String(100))
+    order: Mapped[Order] = relationship("Order", cascade="all,delete")
+    order_id = sa.Column(sa.String(50), sa.ForeignKey("order.id"), nullable=False)
+
+
+MaterialSortingFields = {*DefaultSortingFields, "order_id", "amount", "item_type", "item_price", "full_price"}

@@ -38,7 +38,7 @@ async def create_order_type(
 )
 async def get_orders(
     paginator: schemas.PaginationData = Depends(),
-    order: entities.OrderType = Depends(deps.get_path_order),
+    order: entities.Order = Depends(deps.get_path_order),
     order_param_value_service: services.OrderParamValueService = Depends(
         deps.get_order_param_value_service
     ),

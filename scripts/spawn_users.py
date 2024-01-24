@@ -36,7 +36,7 @@ async def create_users(users_list: List[Dict[str, str]]) -> None:
                 user_roles = await kc.get_user_roles(
                     user_id=user["id"], client_id=client["id"]
                 )
-                user_roles_names = [role.name for role in user_roles]
+                user_roles_names = [role['name'] for role in user_roles]
                 print(f"User {user_dict['username']} {user_roles=} already created")
                 roles_names = [
                     role for role in user_dict["roles"] if role not in user_roles_names

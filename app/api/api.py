@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from app.api.endpoints import (admin, order, order_param_value, order_type,
-                               order_type_param)
+from app.api.endpoints import (admin, materials, order, order_param_value,
+                               order_type, order_type_param)
 
 router = APIRouter()
 
@@ -11,6 +11,7 @@ router.include_router(
 )
 router.include_router(order.router, prefix="/order_type", tags=["Order"])
 router.include_router(order.router1, prefix="/order", tags=["Order"])
+router.include_router(materials.router, prefix="/order_type", tags=["Order Materials"])
 router.include_router(
     order_param_value.router, prefix="/order_type", tags=["Order Params"]
 )

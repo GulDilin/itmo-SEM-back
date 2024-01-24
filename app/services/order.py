@@ -4,7 +4,6 @@ from app import schemas
 from app.core import message
 from app.db import entities
 
-from ..schemas.order import OrderTypeName
 from .base import BaseService
 
 
@@ -22,14 +21,13 @@ class OrderService(BaseService):
         item: schemas.OrderCreate,
         order_type: entities.OrderType,
     ) -> entities.Order:
-        if order_type.name != OrderTypeName.BATH_ORDER and item.parent_order_id is None:
-            raise ValueError("Заполните родительский заказ")
+        if str(order_type.dep_type) != schemas.OrderDepType.MAIN and item.parent_order_id is None:
+            raise ValueError(message.ERROR_NO_PARENT_ORDER)
 
         if item.parent_order_id is not None:
-            child_orders = await self.read_many(parent_order_id=item.parent_order_id)
-            for order in child_orders:
-                if order.order_type_id == order_type.id:
-                    raise ValueError("Заявка с таким типом уже была создана")
+            same_type_exists = await self.exists(parent_order_id=item.parent_order_id, order_type_id=order_type.id)
+            if (same_type_exists):
+                raise ValueError(message.ERROR_ORDER_WITH_TYPE_EXISTS)
 
         return await self._create(
             item=entities.Order(

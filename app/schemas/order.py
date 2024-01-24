@@ -7,7 +7,7 @@ from app.log import logger
 from ..db import entities
 from .keycloak_user import User, UserRole
 from .order_param_value import OrderParamValue
-from .order_type import OrderType
+from .order_type import OrderType, OrderTypeName
 from .util import StrEnum, TimestampedWithId
 
 
@@ -21,12 +21,6 @@ class OrderStatus(StrEnum):
     REMOVED = "REMOVED"
 
 
-class OrderTypeName(StrEnum):
-    BATH_ORDER = "Заказ на баню"
-    TIMBER_ORDER = "Заявка на сруб"
-    DEFECT_ORDER = "Заявка на брак"
-
-
 order_type_requisites: Dict[str, List[str]] = {
     OrderTypeName.BATH_ORDER: [
         UserRole.STAFF_CUSTOMER_MANAGER,
@@ -37,14 +31,41 @@ order_type_requisites: Dict[str, List[str]] = {
         UserRole.STAFF_ORDER_MANAGER,
         UserRole.STAFF_AXEMAN,
     ],
-    OrderTypeName.DEFECT_ORDER: [UserRole.STAFF_ORDER_MANAGER],
+    OrderTypeName.DEFECT_ORDER: [
+        UserRole.STAFF_CUSTOMER_MANAGER,
+        UserRole.STAFF_ORDER_MANAGER,
+    ],
+    OrderTypeName.DELIVERY_ORDER: [
+        UserRole.STAFF_CUSTOMER_MANAGER,
+        UserRole.STAFF_DELIVERY,
+    ],
+    OrderTypeName.MAGIC_ORDER: [
+        UserRole.STAFF_CUSTOMER_MANAGER,
+        UserRole.STAFF_MAGICIAN,
+    ],
+    OrderTypeName.CRAFT_PRODUCT_ORDER: [
+        UserRole.STAFF_CUSTOMER_MANAGER,
+        UserRole.STAFF_CRAFTSMAN,
+    ],
 }
 
 order_status_requisites: Dict[str, List[str]] = {
     OrderStatus.NEW: [UserRole.STAFF_CUSTOMER_MANAGER],
     OrderStatus.READY: [UserRole.STAFF_ORDER_MANAGER, UserRole.STAFF_CUSTOMER_MANAGER],
-    OrderStatus.IN_PROGRESS: [UserRole.STAFF_AXEMAN, UserRole.STAFF_ORDER_MANAGER],
-    OrderStatus.DONE: [UserRole.STAFF_AXEMAN, UserRole.STAFF_ORDER_MANAGER],
+    OrderStatus.IN_PROGRESS: [
+        UserRole.STAFF_AXEMAN,
+        UserRole.STAFF_ORDER_MANAGER,
+        UserRole.STAFF_DELIVERY,
+        UserRole.STAFF_MAGICIAN,
+        UserRole.STAFF_CRAFTSMAN,
+    ],
+    OrderStatus.DONE: [
+        UserRole.STAFF_AXEMAN,
+        UserRole.STAFF_ORDER_MANAGER,
+        UserRole.STAFF_DELIVERY,
+        UserRole.STAFF_MAGICIAN,
+        UserRole.STAFF_CRAFTSMAN,
+    ],
     OrderStatus.ACCEPTED: [
         UserRole.STAFF_ORDER_MANAGER,
     ],

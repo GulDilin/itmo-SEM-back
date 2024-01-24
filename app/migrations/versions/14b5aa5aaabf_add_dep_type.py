@@ -23,7 +23,7 @@ def upgrade() -> None:
     order_dep_types = [
         {"name": "Заказ на баню", "dep_type": "MAIN"},
         {"name": "Заявка на сруб", "dep_type": "DEPEND"},
-        {"name": "Заявка на брак сруба", "dep_type": "DEFECT"},
+        {"name": "Заявка на брак", "dep_type": "DEFECT"},
     ]
     bind = op.get_bind()
     for it in order_dep_types:

@@ -17,10 +17,9 @@ async def create_order(
     order: schemas.OrderCreate,
     order_type: entities.OrderType = Depends(deps.get_path_order_type),
     order_service: services.OrderService = Depends(deps.get_order_service),
-    user: schemas.User = Depends(
-        deps.CurrentUser([schemas.UserRole.STAFF_CUSTOMER_MANAGER])
-    ),
+    user: schemas.User = Depends(deps.get_user_data),
 ) -> schemas.Order:
+    user.check_one_role([schemas.UserRole.STAFF_CUSTOMER_MANAGER, schemas.UserRole.STAFF_ORDER_MANAGER])
     schemas.raise_order_type(user=user, order_type=str(order_type.name))
     await schemas.raise_user_customer_data(order)
     await schemas.raise_user_implementer_data(order)

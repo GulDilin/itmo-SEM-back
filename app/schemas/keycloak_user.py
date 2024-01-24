@@ -37,6 +37,9 @@ class UserRole(StrEnum):
     STAFF_ORDER_MANAGER = "staff_order_manager"
     STAFF_CUSTOMER_MANAGER = "staff_customer_manager"
     STAFF_AXEMAN = "staff_axeman"
+    STAFF_DELIVERY = "staff_delivery"
+    STAFF_MAGICIAN = "staff_magician"
+    STAFF_CRAFTSMAN = "staff_craftsman"
     ADMIN = "admin"
 
 

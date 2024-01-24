@@ -19,8 +19,10 @@ ERROR_INCORRECT_SORTING_WITH_AVAILABLE = (
     "Поле сортировки '{fields}' не поддерживается. "
     "Поддерживаемые форматы - '{available}'"
 )
-ERROR_ACTION_FORBIDDEN = "У вас нет правов на это"
+ERROR_ACTION_FORBIDDEN = "Недостаточно прав"
 ERROR_NOT_AUTHORIZED = "Пользователь не прошел аутентификацию"
+ERROR_NO_PARENT_ORDER = "Заполните родительский заказ"
+ERROR_ORDER_WITH_TYPE_EXISTS = "Заявка с таким типом уже была создана"
 
 """
 MODELS
@@ -33,3 +35,4 @@ MODEL_ORDER_STATUS = "Изменение статуса заказа"
 MODEL_USER = "Пользователь"
 MODEL_AUTH_CLIENT = "Клиент keycloak"
 MODEL_ROLE = "Роль"
+MODEL_MATERIAL = "Материал"

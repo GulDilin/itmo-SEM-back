@@ -104,6 +104,24 @@ async def get_path_order_type_param(
         )
 
 
+async def get_materials_service(
+    session: AsyncSession = Depends(get_session),
+) -> AsyncGenerator[services.MaterialsService, None]:
+    yield services.MaterialsService(session)
+
+
+async def get_path_material(
+    materials_service: services.MaterialsService = Depends(
+        get_materials_service
+    ),
+    order: entities.OrderType = Depends(get_path_order),
+    material_id: UUID = Path(None, title="Material ID"),
+) -> entities.OrderTypeParam:
+    return await materials_service.read_one(
+        order_id=str(order.id), id=str(material_id)
+    )
+
+
 async def get_path_order_type_param_by_order(
     order_type_param_service: services.OrderTypeParamService = Depends(
         get_order_type_param_service

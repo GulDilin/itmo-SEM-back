@@ -6,8 +6,10 @@ from .util import StrEnum, TimestampedWithId
 
 
 class OrderParamValueType(StrEnum):
-    INT = "INT"
-    STR = "STR"
+    INT = "int"
+    STR = "string"
+    TEXT = "text"
+    DATE = "date"
 
 
 class OrderTypeParamCreate(BaseModel):
