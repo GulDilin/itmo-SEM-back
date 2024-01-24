@@ -168,5 +168,5 @@ README.html
 pyrightconfig.json
 .reports
 archive
-pytest_html_report
+pytest_html_report.html
 output.json

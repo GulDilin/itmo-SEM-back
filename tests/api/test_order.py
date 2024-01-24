@@ -1,8 +1,10 @@
 # https://fastapi.tiangolo.com/tutorial/testing/
 import asyncio
+import os
 from typing import List
 
 import pytest
+from dotenv import load_dotenv
 from httpx import AsyncClient
 
 from app.api.endpoints.order import create_order, test_get_orders, update_order
@@ -18,8 +20,10 @@ from app.services.order_param_value import OrderParamValueService
 from app.services.order_status_update import OrderStatusUpdateService
 from app.services.order_type import OrderTypeService
 
+load_dotenv()
+
 # client = TestClient(app)
-base_url = "http://localhost:5010"
+base_url = os.getenv('TEST_BASE_URL', "http://localhost:5010")
 admin_id = ""
 
 
