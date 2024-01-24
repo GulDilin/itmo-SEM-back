@@ -19,6 +19,7 @@ from app.services.order import OrderService
 from app.services.order_param_value import OrderParamValueService
 from app.services.order_status_update import OrderStatusUpdateService
 from app.services.order_type import OrderTypeService
+from tests.api.test_security import get_order_id, assign_roles_to_test_user
 
 load_dotenv()
 
@@ -34,6 +35,7 @@ async def admin_login():
 
 
 async def customer_login(utils):
+    await assign_roles_to_test_user(utils, ["customer"])
     customer_token = await utils.auth_test_client()
     return customer_token
 
@@ -61,9 +63,10 @@ async def test_3_1_5_customer_cannot_view_requests(utils):
             f"{base_url}/api/order_type/", headers={"Authorization": f"Bearer {token}"}
         )
         assert response.status_code == 200
-        assert response.json()["count"] == 3
-        order_type_id = response.json()["results"][0]["id"]
-        request_type_id = response.json()["results"][1]["id"]
+        assert response.json()["count"] == 6
+
+        order_type_id = await get_order_id(token, "Заказ на баню", ac)
+        request_type_id = await get_order_id(token, "Заявка на сруб", ac)
 
         response = await ac.post(
             f"{base_url}/api/order_type/{order_type_id}/order/",

@@ -17,6 +17,7 @@ async def create_order_type(
     ),
     user_data: schemas.User = Depends(deps.get_user_data),
 ) -> schemas.OrderTypeParam:
+    user_data.check_one_role([schemas.UserRole.STAFF])
     return schemas.OrderTypeParam(
         **jsonable_encoder(
             await order_type_param_service.create(item=item, order_type=order_type)
@@ -69,6 +70,7 @@ async def update_order_type_param(
     ),
     user_data: schemas.User = Depends(deps.get_user_data),
 ) -> schemas.OrderTypeParam:
+    user_data.check_one_role([schemas.UserRole.STAFF])
     updated = await order_type_param_service.update(
         id=str(order_type_param.id), **jsonable_encoder(update_data, exclude_none=True)
     )
@@ -83,4 +85,5 @@ async def delete_order_type_param(
     ),
     user_data: schemas.User = Depends(deps.get_user_data),
 ) -> None:
+    user_data.check_one_role([schemas.UserRole.STAFF])
     await order_type_param_service.delete(id=order_type_param.id)
