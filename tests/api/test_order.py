@@ -7,7 +7,7 @@ import pytest
 from dotenv import load_dotenv
 from httpx import AsyncClient
 
-from app.api.endpoints.order import create_order, test_get_orders, update_order
+from app.api.endpoints.order import create_order, te_get_orders, update_order
 from app.api.endpoints.order_param_value import create_order_type
 from app.core.keycloak import get_service_client
 from app.db.session import wrap_session
@@ -19,12 +19,12 @@ from app.services.order import OrderService
 from app.services.order_param_value import OrderParamValueService
 from app.services.order_status_update import OrderStatusUpdateService
 from app.services.order_type import OrderTypeService
-from tests.api.test_security import get_order_id, assign_roles_to_test_user
+from tests.api.test_security import assign_roles_to_test_user, get_order_id
 
 load_dotenv()
 
 # client = TestClient(app)
-base_url = os.getenv('TEST_BASE_URL', "http://localhost:5010")
+base_url = os.getenv("TEST_BASE_URL", "http://localhost:5010")
 admin_id = ""
 
 
@@ -264,7 +264,7 @@ async def test_3_1_17_user_can_filter_requests():
                 ),
             )
             assert response.status == "NEW"
-        filter_response = await test_get_orders(
+        filter_response = await te_get_orders(
             order_type=order_type,
             order_service=service_v,
             user_data=User(
@@ -330,7 +330,7 @@ async def test_3_1_20_user_can_change_status_of_any_request(
         user = User(
             user_id=admin_id,
             name="name",
-            roles=["1", "staff_customer_manager", "STAFF", "staff_order_manager"],
+            roles=["1", "staff_customer_manager", "staff", "staff_order_manager"],
         )
 
         create_order_args = OrderCreate(

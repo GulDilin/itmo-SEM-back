@@ -29,16 +29,18 @@ async def customer_login(utils):
     customer_token = await utils.auth_test_client()
     return customer_token
 
+
 async def get_order_id(admin_token, name, ac):
     response = await ac.get(
-            f"{base_url}/api/order_type/",
-            headers={"Authorization": f"Bearer {admin_token}"},
-        )
+        f"{base_url}/api/order_type/",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
     result_order = {}
     for i in response.json()["results"]:
-        if i['name'] == name:
+        if i["name"] == name:
             result_order = i
-    return result_order['id']
+    return result_order["id"]
+
 
 async def assign_roles_to_test_user(utils, roles: List[str]) -> str:
     kc = get_service_client()
@@ -53,9 +55,9 @@ async def assign_roles_to_test_user(utils, roles: List[str]) -> str:
 
 async def fill_all_order_values(type_id, order_id, admin_token, ac):
     response = await ac.get(
-            f"{base_url}/api/order_type/",
-            headers={"Authorization": f"Bearer {admin_token}"},
-        )
+        f"{base_url}/api/order_type/",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
     result_order = None
     for i in response.json()["results"]:
         if i["id"] == type_id:
@@ -71,6 +73,7 @@ async def fill_all_order_values(type_id, order_id, admin_token, ac):
             },
         )
         assert param_response.status_code == 200
+
 
 @pytest.mark.asyncio
 async def test_security_healthcheck(utils):
@@ -199,7 +202,7 @@ async def test_customer_cannot_work_with_requests(utils, user_roles: List[str]):
         print(response.json())
         order_id = response.json()["id"]
         await fill_all_order_values(order_type_id, order_id, admin_token, ac)
-        
+
         response = await ac.post(
             f"{base_url}/api/order_type/{request_type_id}/order/",
             headers={"Authorization": f"Bearer {admin_token}"},
@@ -254,7 +257,7 @@ async def test_customer_cannot_work_with_requests(utils, user_roles: List[str]):
         (["customer"]),
         (["user"]),
         (["customer", "user"]),
-        (["staff", "user", "staff_customer_manager"]),
+        (["staff", "user"]),
         (["staff_axeman", "staff"]),
     ],
 )
@@ -301,7 +304,7 @@ async def test_customer_cannot_work_with_defects(utils, user_roles: List[str]):
             json={
                 "user_customer": admin_id,
                 "user_implementer": admin_id,
-                "order_type_id": request_type_id,
+                "order_type_id": defect_type_id,
                 "parent_order_id": request_id,
             },
         )
@@ -320,8 +323,8 @@ async def test_customer_cannot_work_with_defects(utils, user_roles: List[str]):
             json={
                 "user_customer": admin_id,
                 "user_implementer": admin_id,
-                "order_type_id": defect_id,
-                "parent_order_id": response.json()["id"],
+                "order_type_id": defect_type_id,
+                "parent_order_id": defect_id,
             },
         )
         print(update_response.content)
@@ -401,10 +404,6 @@ async def test_user_cannot_change_status(
         assert order_response.status_code == 200
         assert order_response.json()["status"] == "NEW"
 
-        order_param_type_ids = [
-            x["id"] for x in response.json()["results"][1]["params"]
-        ]
-
         response = await ac.post(
             f"{base_url}/api/order_type/{request_type_id}/order/",
             headers={"Authorization": f"Bearer {admin_token}"},
@@ -418,15 +417,7 @@ async def test_user_cannot_change_status(
         assert response.status_code == 200
         assert response.json()["status"] == "NEW"
 
-        for param_id in order_param_type_ids:
-            param_response = await ac.post(
-                f"{base_url}/api/order_type/{request_type_id}/order/{response.json()['id']}/params/{param_id}/",
-                headers={"Authorization": f"Bearer {admin_token}"},
-                json={
-                    "value": "1",
-                },
-            )
-            assert param_response.status_code == 200
+        await fill_all_order_values(request_type_id, response.json()["id"], admin_token, ac)
 
         for new_status in start_statuses:
             update_response = await ac.put(
