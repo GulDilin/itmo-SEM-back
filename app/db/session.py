@@ -9,7 +9,9 @@ from app.settings import settings
 sqlalchemy_database_uri = settings.DATABASE_URI
 
 async_engine = create_async_engine(sqlalchemy_database_uri, pool_pre_ping=True)
-async_session = async_sessionmaker(async_engine, expire_on_commit=False, class_=AsyncSession)
+async_session = async_sessionmaker(
+    async_engine, expire_on_commit=False, class_=AsyncSession
+)
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:

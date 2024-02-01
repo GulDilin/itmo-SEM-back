@@ -14,4 +14,4 @@ async def verify_token(token: str) -> None:
 
 def decode_auth_token(token: str) -> dict:
     token_data = token.split(".")[1]
-    return json.loads(base64.b64decode(bytes(token_data + '==', 'ascii')))
+    return json.loads(base64.b64decode(bytes(token_data + "==", "ascii")))

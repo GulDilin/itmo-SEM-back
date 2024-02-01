@@ -1,6 +1,6 @@
 import logging
 
-LOG_NAME = 'backend'
+LOG_NAME = "backend"
 LOG_LEVEL = logging.INFO
 LOG_FORMAT = "[%(asctime)s | %(levelname)s | %(name)s - %(process)s - %(threadName)s - %(filename)s:%(lineno)s - %(funcName)s() ] %(message)s"  # noqa
 logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)

@@ -105,3 +105,9 @@ DATABASE_URI=postgresql+asyncpg://postgres:postgres@127.0.0.1:5438/sem_data
 ```shell
 poetry run alembic revision --autogenerate -m "<message>"
 ```
+
+### Run tests and generate report
+
+```shell
+poetry run pytest --html-report=./.reports/report.html .
+```
